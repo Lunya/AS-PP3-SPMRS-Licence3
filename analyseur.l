@@ -10,12 +10,11 @@
  * Copyright (c) 2015-2016
 */
 
+#include "y.tab.h"
 #include <stdlib.h>
 #include <string.h>
 
-
-int yylex(void);
-void yyerror(char*);
+int fileno(FILE*);
 %}
 
 %option noinput nounput
@@ -48,15 +47,15 @@ void yyerror(char*);
 }
 
 [[:digit:]]+	{
-	yylval.nombre = atoi(yytext);
+	yylval.number = atoi(yytext);
 	return NUMBER;
 }
 
-\"	{ begin TEXT; }
+"\""	{ BEGIN TEXT; }
 
-<TEXT>\"	{ begin INITIAL; }
+<TEXT>"\""	{ BEGIN INITIAL; }
 
-<TEXT>.+	{
+<TEXT>[^[:space:]]+	{
 	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char));
 	strcpy(yylval.text, yytext);
 	return TEXT;
@@ -75,5 +74,7 @@ void yyerror(char*);
 ")"		{ return RIGHT_PARENTHESIS; }
 
 "="		{ return EQUAL; }
+
+<<EOF>>		{ return END_OF_FILE; }
 
 %%
