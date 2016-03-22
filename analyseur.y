@@ -20,22 +20,11 @@ void yyerror(char*);
 	char* text;
 }
 
-%token SPACE
-%token LABEL
+%token SPACE LABEL LEFT_BRACKET RIGHT_BRACKET LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS EQUAL END_OF_FILE
 %token <number> NUMBER
 %token <text> TEXT
-%token LEFT_BRACKET
-%token RIGHT_BRACKET
-%token LEFT_SQUARE_BRACKET
-%token RIGHT_SQUARE_BRACKET
-%token LEFT_PARENTHESIS
-%token RIGHT_PARENTHESIS
-%token EQUAL
-%token END_OF_FILE
 
-%output "y.tab.c"
-%output "y.tab.h"
-
+%start fin
 %%
 
 fin:		machin END_OF_FILE { printf("fin\n"); }

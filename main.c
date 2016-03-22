@@ -9,12 +9,12 @@
  * Copyright (c) 2015-2016
 */
 
-#include "y.tab.h"
+#include "analyseur.tab.h"
 
 #include <stdio.h>
 
 
-int main(int argc, char* argv[], char* envp[])
+int main(void)
 {
 	return yyparse();
 }

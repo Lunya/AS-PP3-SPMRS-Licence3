@@ -10,7 +10,7 @@
  * Copyright (c) 2015-2016
 */
 
-#include "y.tab.h"
+#include "analyseur.tab.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -33,9 +33,11 @@ int fileno(FILE*);
 	 */
 	if (strlen(yytext) >= 3)
 	{
+		//Ps : Penser à le traiter d'une autre façon, et je pense que le traiter
+		//directement dans l'expression regulière serait mieux.
 		if ((yytext[0] == 'x' || yytext[0] == 'X') &&\
-			(yytext[0] == 'm' || yytext[0] == 'M') &&\
-			(yytext[0] == 'l' || yytext[0] == 'L'))
+			(yytext[1] == 'm' || yytext[1] == 'M') &&\
+			(yytext[2] == 'l' || yytext[2] == 'L'))
 		{
 			//
 		}
