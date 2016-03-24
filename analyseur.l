@@ -23,7 +23,10 @@ int fileno(FILE*);
 
 %%
 
-[[:space:]]+	{ return SPACE; }
+\"	{ printf("DQ\n");return DOUBLE_QUOTE;}
+
+[[:space:]]+	{ printf("SPACE\n");return SPACE; }
+
 
 [[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+	{
 	/*
@@ -31,6 +34,7 @@ int fileno(FILE*);
 	 * alors vérifier si elle commence ou non par "XML" sans respecter
 	 * la casse.
 	 */
+	 printf("MotL : %s\n", yytext);
 	if (strlen(yytext) >= 3)
 	{
 		//Ps : Penser à le traiter d'une autre façon, et je pense que le traiter
@@ -48,20 +52,20 @@ int fileno(FILE*);
 	return LABEL; // NOM BALISE
 }
 
+[[:alnum:]]+ { 
+	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+	strcpy(yylval.text, yytext);
+	printf("MotW : %s\n", yytext);
+	return WORD;
+	} 
+	
 [[:digit:]]+	{
 	yylval.number = atoi(yytext);
 	return NUMBER;
 }
 
-"\""	{ BEGIN TEXT; }
 
-<TEXT>"\""	{ BEGIN INITIAL; }
 
-<TEXT>[^[:space:]]+	{
-	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char));
-	strcpy(yylval.text, yytext);
-	return TEXT;
-}
 
 "{"		{ return LEFT_BRACKET; }
 
@@ -77,6 +81,9 @@ int fileno(FILE*);
 
 "="		{ return EQUAL; }
 
+
+
+"/"		{ return SLASH;}
 <<EOF>>		{ return END_OF_FILE; }
 
 %%
