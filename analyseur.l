@@ -84,6 +84,6 @@ int fileno(FILE*);
 
 
 "/"		{ return SLASH;}
-<<EOF>>		{ return END_OF_FILE; }
+
 
 %%

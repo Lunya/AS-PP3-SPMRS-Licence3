@@ -22,75 +22,106 @@ void yyerror(char*);
 
 %token SPACE LABEL LEFT_BRACKET RIGHT_BRACKET LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS EQUAL END_OF_FILE DOUBLE_QUOTE SLASH
 %token <number> NUMBER
-%token <text> TEXT WORD
+%token <text> text WORD
 
-%start TAG
+%start tags
 %%
 
-TAG:
-			LABEL ATTRIBUTES CONTENTS {printf("TAG\n");}
-			| LABEL SPACE ATTRIBUTES CONTENTS {printf("TAG\n");}
-			| LABEL ATTRIBUTES SPACE CONTENTS {printf("TAG\n");}
-			| LABEL SPACE ATTRIBUTES SPACE CONTENTS {printf("TAG\n");}
-			| LABEL CONTENTS {printf("TAG\n");}
-			| LABEL SPACE CONTENTS {printf("TAG\n");}
+tags:
+			tags tag {printf("mtags\n");}
+			| tag SPACE tags {printf("mtags\n");}
+			| tag {printf("otags\n");}
+			| LEFT_BRACKET  SPACE tags RIGHT_BRACKET {printf("stags\n");}
+			| LEFT_BRACKET  tags SPACE RIGHT_BRACKET {printf("stags\n");}
+			| LEFT_BRACKET  SPACE tags SPACE RIGHT_BRACKET {printf("stags\n");}
 ;
 
-ATTRIBUTES:
-			LEFT_SQUARE_BRACKET ATTRIBUTE RIGHT_SQUARE_BRACKET {printf("ATTRIBUTES\n");}
-			| LEFT_SQUARE_BRACKET SPACE ATTRIBUTE RIGHT_SQUARE_BRACKET {printf("ATTRIBUTES\n");}
-			| LEFT_SQUARE_BRACKET ATTRIBUTE SPACE RIGHT_SQUARE_BRACKET {printf("ATTRIBUTES\n");}
-			| LEFT_SQUARE_BRACKET SPACE ATTRIBUTE SPACE RIGHT_SQUARE_BRACKET {printf("ATTRIBUTES\n");}
+tag:
+			LABEL attributes contents {printf("tag\n");}
+			| LABEL SPACE attributes contents {printf("tag\n");}
+			| LABEL attributes SPACE contents {printf("tag\n");}
+			| LABEL SPACE attributes SPACE contents {printf("tag\n");}
+			| LABEL contents {printf("tag\n");}
+			| LABEL SPACE contents {printf("tag\n");}
 ;
 
-ATTRIBUTE:
-			LABEL EQUAL TEXTCONTENT {printf("ATTRIBUTE\n");}
-			| LABEL SPACE EQUAL TEXTCONTENT {printf("ATTRIBUTE\n");}
-			| LABEL EQUAL SPACE TEXTCONTENT {printf("ATTRIBUTE\n");}
-			| LABEL SPACE EQUAL SPACE TEXTCONTENT {printf("ATTRIBUTE\n");}
-			| ATTRIBUTE ATTRIBUTE {printf("ATTRIBUTE\n");}
-			| ATTRIBUTE SPACE ATTRIBUTE {printf("ATTRIBUTE\n");}
+attributes:
+			LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET {printf("attributes\n");}
+			| LEFT_SQUARE_BRACKET SPACE attribute RIGHT_SQUARE_BRACKET {printf("attributes\n");}
+			| LEFT_SQUARE_BRACKET attribute SPACE RIGHT_SQUARE_BRACKET {printf("attributes\n");}
+			| LEFT_SQUARE_BRACKET SPACE attribute SPACE RIGHT_SQUARE_BRACKET {printf("attributes\n");}
 ;
 
-CONTENTS:
-			LEFT_BRACKET CONTENT RIGHT_BRACKET {printf("CONTENTS\n");}
-			| LEFT_BRACKET SPACE CONTENT RIGHT_BRACKET {printf("CONTENTS\n");}
-			| LEFT_BRACKET CONTENT SPACE RIGHT_BRACKET {printf("CONTENTS\n");}
-			| LEFT_BRACKET SPACE CONTENT SPACE RIGHT_BRACKET {printf("CONTENTS\n");}
+attribute:
+			LABEL EQUAL stringcontent {printf("attribute\n");}
+			| LABEL SPACE EQUAL stringcontent {printf("attribute\n");}
+			| LABEL EQUAL SPACE stringcontent {printf("attribute\n");}
+			| LABEL SPACE EQUAL SPACE stringcontent {printf("attribute\n");}
+			| attribute attribute {printf("attribute\n");}
+			| attribute SPACE attribute {printf("attribute\n");}
 ;
 
-CONTENT:
-			TEXTCONTENT CONTENT {printf("CONTENT\n");}
-			| TEXTCONTENT SPACE CONTENT {printf("CONTENT\n");}
-			| TAG CONTENT {printf("CONTENT\n");}
-			| TAG SPACE CONTENT {printf("CONTENT\n");}
-			| ATAG CONTENT {printf("CONTENT\n");}
-			| ATAG SPACE CONTENT {printf("CONTENT\n");}
-			| TEXTCONTENT {printf("CONTENT\n");}
-			| TAG {printf("CONTENT\n");}
-			| ATAG {printf("CONTENT\n");}
+contents:
+			LEFT_BRACKET content RIGHT_BRACKET {printf("contents\n");}
+			| LEFT_BRACKET SPACE content RIGHT_BRACKET {printf("contents\n");}
+			| LEFT_BRACKET content SPACE RIGHT_BRACKET {printf("contents\n");}
+			| LEFT_BRACKET SPACE content SPACE RIGHT_BRACKET {printf("contents\n");}
 ;
 
-TEXTCONTENT:
-			DOUBLE_QUOTE TEXTGROUP DOUBLE_QUOTE {printf("TEXTCONTENT\n");}
-			| DOUBLE_QUOTE SPACE TEXTGROUP DOUBLE_QUOTE {printf("TEXTCONTENT\n");}
-			| DOUBLE_QUOTE TEXTGROUP SPACE DOUBLE_QUOTE {printf("TEXTCONTENT\n");}
-			| DOUBLE_QUOTE SPACE TEXTGROUP SPACE DOUBLE_QUOTE {printf("TEXTCONTENT\n");}
+content:
+			textcontent content {printf("content\n");}
+			| textcontent SPACE content {printf("content\n");}
+			| tag content {printf("content\n");}
+			| tag SPACE content {printf("content\n");}
+			| atag content {printf("content\n");}
+			| atag SPACE content {printf("content\n");}
+			| textcontent {printf("content\n");}
+			| tag {printf("content\n");}
+			| atag {printf("content\n");}
 ;
 
-TEXTGROUP:
-			WORD TEXTGROUP {printf("TEXTGROUP\n");}
-			| WORD SPACE TEXTGROUP {printf("TEXTGROUP\n");}
-			| LABEL SPACE TEXTGROUP {printf("TEXTGROUPWS\n");}
-			| WORD SPACE TEXTGROUP SPACE {printf("TEXTGROUP\n");}
-			| LABEL SPACE TEXTGROUP SPACE {printf("TEXTGROUPS\n");}
-			| WORD {printf("TEXTGROUP\n");}
-			| LABEL {printf("TEXTGROUP\n");}
-			| WORD SPACE {printf("TEXTGROUP\n");}
-			| LABEL SPACE {printf("TEXTGROUP\n");}
+// L'ensemble de mot entouré de double quotes
+textcontent:
+			DOUBLE_QUOTE textgroup DOUBLE_QUOTE {printf("textcontent\n");}
+			| DOUBLE_QUOTE SPACE textgroup DOUBLE_QUOTE {printf("textcontent\n");}
+			| DOUBLE_QUOTE textgroup SPACE DOUBLE_QUOTE {printf("textcontent\n");}
+			| DOUBLE_QUOTE SPACE textgroup SPACE DOUBLE_QUOTE {printf("textcontent\n");}
 ;
 
-ATAG:
+// Ensemble de mot
+textgroup:
+			WORD textgroup {printf("textgroup\n");}
+			| WORD SPACE textgroup {printf("textgroup\n");}
+			| LABEL SPACE textgroup {printf("textgroupWS\n");}
+			| WORD SPACE textgroup SPACE {printf("textgroup\n");}
+			| LABEL SPACE textgroup SPACE {printf("textgroupS\n");}
+			| WORD {printf("textgroup\n");}
+			| LABEL {printf("textgroup\n");}
+			| WORD SPACE {printf("textgroup\n");}
+			| LABEL SPACE {printf("textgroup\n");}
+;
+
+//Même chose qu'au dessus sans créer des arbres
+stringcontent:
+			DOUBLE_QUOTE stringgroup DOUBLE_QUOTE {printf("stringcontent\n");}
+			| DOUBLE_QUOTE SPACE stringgroup DOUBLE_QUOTE {printf("stringcontent\n");}
+			| DOUBLE_QUOTE stringgroup SPACE DOUBLE_QUOTE {printf("stringcontent\n");}
+			| DOUBLE_QUOTE SPACE stringgroup SPACE DOUBLE_QUOTE {printf("stringcontent\n");}
+;
+
+stringgroup:
+			WORD stringgroup {printf("stringgroup\n");}
+			| WORD SPACE stringgroup {printf("stringgroup\n");}
+			| LABEL SPACE stringgroup {printf("stringgroup\n");}
+			| WORD SPACE stringgroup SPACE {printf("stringgroup\n");}
+			| LABEL SPACE stringgroup SPACE {printf("stringgroupS\n");}
+			| WORD {printf("stringgroup\n");}
+			| LABEL {printf("stringgroup\n");}
+			| WORD SPACE {printf("stringgroup\n");}
+			| LABEL SPACE {printf("stringgroup\n");}
+;
+
+atag:
 	LABEL SLASH {printf("ATAB\n");}
 ;
 %%
