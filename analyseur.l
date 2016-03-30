@@ -27,7 +27,6 @@ int fileno(FILE*);
 
 [[:space:]]+	{ printf("SPACE\n");return SPACE; }
 
-
 [[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+	{
 	/*
 	 * si le nom de l'étiquette est au moins de longueur 3 caracères
@@ -81,9 +80,16 @@ int fileno(FILE*);
 
 "="		{ return EQUAL; }
 
-
-
 "/"		{ return SLASH;}
 
+[[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+\{ {
+    yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+    yyval.val = strndup(yytext, yyleng - 1);
+    return LABEL_LEFT_BRACKET; }
+
+[[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+\[ {
+    yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+    yyval.val = strndup(yytext, yyleng - 1);
+    return LABEL_LEFT_SQUARE_BRACKET; }
 
 %%
