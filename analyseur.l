@@ -25,8 +25,60 @@ int fileno(FILE*);
 
 \"	{ printf("DQ\n");return DOUBLE_QUOTE;}
 
-[[:space:]]+	{ printf("SPACE\n");return SPACE; }
 
+
+
+	
+[[:digit:]]+	{
+	yylval.number = atoi(yytext);
+	return NUMBER;
+}
+
+
+
+
+"{"		{ return LEFT_BRACKET; }
+
+"}"		{ printf("RB\n");return RIGHT_BRACKET; }
+
+"["		{ return LEFT_SQUARE_BRACKET; }
+
+"]"		{ printf("RSB\n");return RIGHT_SQUARE_BRACKET; }
+
+"("		{ return LEFT_PARENTHESIS; }
+
+")"		{ return RIGHT_PARENTHESIS; }
+
+"="		{ return EQUAL; }
+
+"/"		{ return SLASH;}
+
+[[:alpha:]][[:alnum:]_'.]*\{|_[[:alnum:]_'.]+\{ {
+    yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+	strcpy(yylval.text, yytext);
+	printf("LLB |%s|\n", yytext);
+    return LABEL_LEFT_BRACKET; }
+
+[[:alpha:]][[:alnum:]_'.]*\[|_[[:alnum:]_'.]+\[ {
+    yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+	strcpy(yylval.text, yytext);
+	printf("LLSB |%s|\n", yytext);
+    return LABEL_LEFT_SQUARE_BRACKET; }
+
+[[:alnum:].]+ { 
+	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+	strcpy(yylval.text, yytext);
+	printf("MotW : %s\n", yytext);
+	return WORD;
+	} 
+	
+[[:alnum:].]+[[:space:]]+ { 
+	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+	strcpy(yylval.text, yytext);
+	printf("MotWS : %s\n", yytext);
+	return WORD_SPACE;
+	} 
+	
 [[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+	{
 	/*
 	 * si le nom de l'étiquette est au moins de longueur 3 caracères
@@ -50,46 +102,5 @@ int fileno(FILE*);
 	strcpy(yylval.text, yytext);
 	return LABEL; // NOM BALISE
 }
-
-[[:alnum:]]+ { 
-	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-	strcpy(yylval.text, yytext);
-	printf("MotW : %s\n", yytext);
-	return WORD;
-	} 
-	
-[[:digit:]]+	{
-	yylval.number = atoi(yytext);
-	return NUMBER;
-}
-
-
-
-
-"{"		{ return LEFT_BRACKET; }
-
-"}"		{ return RIGHT_BRACKET; }
-
-"["		{ return LEFT_SQUARE_BRACKET; }
-
-"]"		{ return RIGHT_SQUARE_BRACKET; }
-
-"("		{ return LEFT_PARENTHESIS; }
-
-")"		{ return RIGHT_PARENTHESIS; }
-
-"="		{ return EQUAL; }
-
-"/"		{ return SLASH;}
-
-[[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+\{ {
-    yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-    yyval.val = strndup(yytext, yyleng - 1);
-    return LABEL_LEFT_BRACKET; }
-
-[[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+\[ {
-    yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-    yyval.val = strndup(yytext, yyleng - 1);
-    return LABEL_LEFT_SQUARE_BRACKET; }
-
+. {printf("| %s |",yytext);}
 %%

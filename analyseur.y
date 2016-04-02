@@ -20,60 +20,44 @@ void yyerror(char*);
 	char* text;
 }
 
-%token SPACE LABEL LEFT_BRACKET RIGHT_BRACKET LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS EQUAL END_OF_FILE DOUBLE_QUOTE SLASH
+%token LABEL LEFT_BRACKET RIGHT_BRACKET LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS EQUAL END_OF_FILE DOUBLE_QUOTE SLASH
 %token <number> NUMBER
-%token <text> text WORD
+%token <text> text WORD WORD_SPACE LABEL_LEFT_BRACKET LABEL_LEFT_SQUARE_BRACKET
 
 %start tags
 %%
-
+//Une forêt de balises
 tags:
 			tag tags                                       {printf("mtags\n");}
-			| tag SPACE tags                               {printf("mtags\n");}
 			| tag                                          {printf("otags\n");}
-			| LEFT_BRACKET  SPACE tags RIGHT_BRACKET       {printf("stags\n");}
 			| LEFT_BRACKET  tags  RIGHT_BRACKET            {printf("stags\n");}
                         ;
-
+//Balise
 tag:
-			LABEL attributes contents               {printf("tag\n");}
-			| LABEL attributes SPACE contents       {printf("tag\n");}
-			| LABEL contents                        {printf("tag\n");}
-			| LABEL SPACE contents                  {printf("tag\n");}
+			LABEL_LEFT_SQUARE_BRACKET attributes contents               {printf("tag\n");}
+			| LABEL_LEFT_BRACKET contents           {printf("tag\n");}
                         ;
-
+//L'ensemble d'attributs encadré par des crochets
 attributes:
-			LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET               {printf("attributes\n");}
-			| LEFT_SQUARE_BRACKET SPACE attribute RIGHT_SQUARE_BRACKET       {printf("attributes\n");}
-			| LEFT_SQUARE_BRACKET attribute SPACE RIGHT_SQUARE_BRACKET       {printf("attributes\n");}
-			| LEFT_SQUARE_BRACKET SPACE attribute SPACE RIGHT_SQUARE_BRACKET {printf("attributes\n");}  
+			attribute RIGHT_SQUARE_BRACKET               {printf("attributes\n");}
                         ;
-
+//Un ensemble d'attributs
 attribute:
-			LABEL EQUAL stringcontent               {printf("attribute\n");}
-			| LABEL SPACE EQUAL stringcontent       {printf("attribute\n");}
-			| LABEL EQUAL SPACE stringcontent       {printf("attribute\n");}
-			| LABEL SPACE EQUAL SPACE stringcontent {printf("attribute\n");}
-			| attribute attribute                   {printf("attribute\n");}
-			| attribute SPACE attribute             {printf("attribute\n");}
+			WORD EQUAL stringcontent               {printf("attribute\n");}
+			| WORD EQUAL stringcontent attribute   {printf("attribute\n");}
                         ;
-
+//Le contenu entre ces accolades
 contents:
-			LEFT_BRACKET content RIGHT_BRACKET               {printf("contents\n");}
-			| LEFT_BRACKET SPACE content RIGHT_BRACKET       {printf("contents\n");}
-			| LEFT_BRACKET content SPACE RIGHT_BRACKET       {printf("contents\n");}
-			| LEFT_BRACKET SPACE content SPACE RIGHT_BRACKET {printf("contents\n");}
-                        | LEFT_BRACKET RIGHT_BRACKET                     {printf("contents\n");}
+			content RIGHT_BRACKET               {printf("O contents\n");}
+			| LEFT_BRACKET content RIGHT_BRACKET               {printf("A contents\n");}
+            | RIGHT_BRACKET                     {printf("?? contents\n");}
                         ;
-
+//Contenu d'une balise : Ensemble de textes, de balises ou de balises autofermantes.
 content:
 			textcontent content         {printf("content\n");}
-			| textcontent SPACE content {printf("content\n");}
 			| tag content               {printf("content\n");}
-			| tag SPACE content         {printf("content\n");}
 			| atag content              {printf("content\n");}
-			| atag SPACE content        {printf("content\n");}
-			| textcontent               {printf("content\n");}
+			| textcontent               {printf("TC content\n");}
 			| tag                       {printf("content\n");}
 			| atag                      {printf("content\n");}
                         ;
@@ -81,45 +65,29 @@ content:
 // L'ensemble de mot entouré de double quotes
 textcontent:
 			DOUBLE_QUOTE textgroup DOUBLE_QUOTE               {printf("textcontent\n");}
-			| DOUBLE_QUOTE SPACE textgroup DOUBLE_QUOTE       {printf("textcontent\n");}
-			| DOUBLE_QUOTE textgroup SPACE DOUBLE_QUOTE       {printf("textcontent\n");}
-			| DOUBLE_QUOTE SPACE textgroup SPACE DOUBLE_QUOTE {printf("textcontent\n");}
                         ;
 
 // Ensemble de mot
 textgroup:
 			WORD textgroup                {printf("textgroup\n");}
-			| WORD SPACE textgroup        {printf("textgroup\n");}
-			| LABEL SPACE textgroup       {printf("textgroupWS\n");}
-			| WORD SPACE textgroup SPACE  {printf("textgroup\n");}
-			| LABEL SPACE textgroup SPACE {printf("textgroupS\n");}
+			| WORD_SPACE textgroup		  {printf("textgroup\n");}
 			| WORD                        {printf("textgroup\n");}
-			| LABEL                       {printf("textgroup\n");}
-			| WORD SPACE                  {printf("textgroup\n");}
-			| LABEL SPACE                 {printf("textgroup\n");}
+			| WORD_SPACE				  {printf("textgroup\n");}
                         ;
 
 //Même chose qu'au dessus sans créer des arbres
 stringcontent:
 			DOUBLE_QUOTE stringgroup DOUBLE_QUOTE               {printf("stringcontent\n");}
-			| DOUBLE_QUOTE SPACE stringgroup DOUBLE_QUOTE       {printf("stringcontent\n");}
-			| DOUBLE_QUOTE stringgroup SPACE DOUBLE_QUOTE       {printf("stringcontent\n");}
-			| DOUBLE_QUOTE SPACE stringgroup SPACE DOUBLE_QUOTE {printf("stringcontent\n");}
                         ;
 
 stringgroup:
-			WORD stringgroup                {printf("stringgroup\n");}
-			| WORD SPACE stringgroup        {printf("stringgroup\n");}
-			| LABEL SPACE stringgroup       {printf("stringgroup\n");}
-			| WORD SPACE stringgroup SPACE  {printf("stringgroup\n");}
-			| LABEL SPACE stringgroup SPACE {printf("stringgroupS\n");}
-			| WORD                          {printf("stringgroup\n");}
-			| LABEL                         {printf("stringgroup\n");}
-			| WORD SPACE                    {printf("stringgroup\n");}
-			| LABEL SPACE                   {printf("stringgroup\n");}
+			WORD stringgroup              {printf("stringgroup\n");}
+			| WORD_SPACE stringgroup	  {printf("stringgroup\n");}
+			| WORD                        {printf("stringgroup\n");}
+			| WORD_SPACE				  {printf("stringgroup\n");}
                         ;
-
+//Balise autofermante
 atag:
-                  	LABEL SLASH {printf("ATAB\n");}
+                  	WORD SLASH {printf("ATAB\n");}
                         ;
 %%
