@@ -22,7 +22,7 @@ void yyerror(char*);
 
 %token LABEL LEFT_BRACKET RIGHT_BRACKET LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS EQUAL END_OF_FILE DOUBLE_QUOTE SLASH
 %token <number> NUMBER
-%token <text> text WORD WORD_SPACE LABEL_LEFT_BRACKET LABEL_LEFT_SQUARE_BRACKET
+%token <text> text WORD WORD_SPACE LABEL_LEFT_BRACKET LABEL_LEFT_SQUARE_BRACKET LABEL_EQUAL
 
 %start tags
 %%
@@ -31,11 +31,13 @@ tags:
 			tag tags                                       {printf("mtags\n");}
 			| tag                                          {printf("otags\n");}
 			| LEFT_BRACKET  tags  RIGHT_BRACKET            {printf("stags\n");}
+			| LEFT_BRACKET  tags  RIGHT_BRACKET tags            {printf("sstags\n");}
                         ;
 //Balise
 tag:
-			LABEL_LEFT_SQUARE_BRACKET attributes contents               {printf("tag\n");}
-			| LABEL_LEFT_BRACKET contents           {printf("tag\n");}
+			LABEL_LEFT_SQUARE_BRACKET attributes contents               {printf("Atag\n");}
+			| LABEL_LEFT_BRACKET contents           {printf("WAtag\n");}
+			| LEFT_BRACKET RIGHT_BRACKET {printf("VOID\n");}
                         ;
 //L'ensemble d'attributs encadré par des crochets
 attributes:
@@ -43,8 +45,8 @@ attributes:
                         ;
 //Un ensemble d'attributs
 attribute:
-			WORD EQUAL stringcontent               {printf("attribute\n");}
-			| WORD EQUAL stringcontent attribute   {printf("attribute\n");}
+			LABEL_EQUAL stringcontent               {printf("attribute\n");}
+			| LABEL_EQUAL stringcontent attribute   {printf("attribute\n");}
                         ;
 //Le contenu entre ces accolades
 contents:

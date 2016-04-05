@@ -23,7 +23,7 @@ int fileno(FILE*);
 
 %%
 
-\"	{ printf("DQ\n");return DOUBLE_QUOTE;}
+\"	{ return DOUBLE_QUOTE;}
 
 
 
@@ -37,7 +37,7 @@ int fileno(FILE*);
 
 
 
-"{"		{ return LEFT_BRACKET; }
+"{"		{ printf("LB\n");return LEFT_BRACKET; }
 
 "}"		{ printf("RB\n");return RIGHT_BRACKET; }
 
@@ -62,12 +62,19 @@ int fileno(FILE*);
 [[:alpha:]][[:alnum:]_'.]*\[|_[[:alnum:]_'.]+\[ {
     yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
 	strcpy(yylval.text, yytext);
-	printf("LLSB |%s|\n", yytext);
+	printf("LLSB (%s)\n", yytext);
     return LABEL_LEFT_SQUARE_BRACKET; }
 
+[[:alpha:]][[:alnum:]_'.]*\=|_[[:alnum:]_'.]+\= {
+    yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+	strcpy(yylval.text, yytext);
+	printf("LE (%s)\n", yytext);
+    return LABEL_EQUAL; }
+    
 [[:alnum:].]+ { 
 	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
 	strcpy(yylval.text, yytext);
+	fprintf(stderr, "Salut\n");
 	printf("MotW : %s\n", yytext);
 	return WORD;
 	} 
@@ -102,5 +109,5 @@ int fileno(FILE*);
 	strcpy(yylval.text, yytext);
 	return LABEL; // NOM BALISE
 }
-. {printf("| %s |",yytext);}
+. {printf("| %s |\n",yytext);}
 %%
