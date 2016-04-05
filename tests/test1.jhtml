@@ -1,0 +1,13 @@
+html{
+	head{
+		meta[charset="utf-8"]/
+		link[rel = "stylesheet" type="text/css" href="style.css"]/
+	}
+	body{
+		div[class="bordered green"]
+		{
+			h1{"Coucou les gens"}
+			p{Comment dire bonjour en toutes circonstances}
+		}
+	}
+}

@@ -1,0 +1,9 @@
+a{
+	div{
+		"Ceci est un lien qui vous conduira au" a[href="www.labri.fr" id="lien"]{"LaBRI"} "a Bordeaux."
+		br/
+	}
+	{div{"contenu1"} div{"contenu2"} 
+		a[href="www.labri.fr"]{"LaBRI"}
+	}
+}
