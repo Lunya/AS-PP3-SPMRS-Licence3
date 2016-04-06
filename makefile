@@ -13,7 +13,7 @@ all: main.c analyseur.tab.c lex.yy.c
 debug: main.c analyseur.tab.c lex.yy.c
 	$(CC) $(CFLAGS2) -o $(OUT) $^ $(LDLIBS)
 
-lex.yy.c: analyseur.l y.tab.h
+lex.yy.c: analyseur.l analyseur.tab.h
 	$(LEX) -o $@ $<
 
 analyseur.tab.h analyseur.tab.c: analyseur.y

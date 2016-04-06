@@ -30,7 +30,7 @@ bool start_with_xml(char *, int);
 %x TEXT
 
 LABEL [[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+
-WORD [^[:space:]{\[\]}="]+
+WORD [^[:space:]{\[\]}="\/]+
 
 %%
 
@@ -41,28 +41,30 @@ WORD [^[:space:]{\[\]}="]+
 
 	
 [[:digit:]]+	{
+	printf("DIGIT\n");
 	yylval.number = atoi(yytext);
 	return NUMBER;
 }
 
 
 
+"/"		{ printf("SLASH\n");return SLASH;}
 
 "{"		{ printf("LB\n");return LEFT_BRACKET; }
 
 "}"		{ printf("RB\n");return RIGHT_BRACKET; }
 
-"["		{ return LEFT_SQUARE_BRACKET; }
+"["		{ printf("LSB\n"); return LEFT_SQUARE_BRACKET; }
 
 "]"		{ printf("RSB\n");return RIGHT_SQUARE_BRACKET; }
 
-"("		{ return LEFT_PARENTHESIS; }
+"("		{ printf("SLASH\n");return LEFT_PARENTHESIS; }
 
-")"		{ return RIGHT_PARENTHESIS; }
+")"		{ printf("SLASH\n");return RIGHT_PARENTHESIS; }
 
-"="		{ return EQUAL; }
+"="		{ printf("SLASH\n");return EQUAL; }
 
-"/"		{ return SLASH;}
+
 
 ({LABEL})\{ {
 	if (start_with_xml(yytext, yyleng))

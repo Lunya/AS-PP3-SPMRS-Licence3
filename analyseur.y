@@ -61,7 +61,8 @@ content:
 			| atag content              {printf("content\n");}
 			| textcontent               {printf("TC content\n");}
 			| tag                       {printf("content\n");}
-			| atag                      {printf("content\n");}
+			| atag                      {printf("content\n");} 
+			| LEFT_BRACKET content RIGHT_BRACKET {printf("BRACK content\n");}
                         ;
 
 // L'ensemble de mot entouré de double quotes
@@ -90,6 +91,8 @@ stringgroup:
                         ;
 //Balise autofermante
 atag:
-                  	WORD SLASH {printf("ATAB\n");}
+                  	WORD SLASH {printf("ATAG\n");}
+                  	| WORD_SPACE SLASH {printf("SATAG\n");} 
+                  	| LABEL_LEFT_SQUARE_BRACKET attributes SLASH {printf("Att ATAG\n");} 
                         ;
 %%
