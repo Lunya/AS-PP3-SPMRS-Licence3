@@ -16,16 +16,16 @@ debug: main.c analyseur.tab.c lex.yy.c
 lex.yy.c: analyseur.l y.tab.h
 	$(LEX) -o $@ $<
 
-y.tab.h y.tab.c: analyseur.y
+analyseur.tab.h analyseur.tab.c: analyseur.y
 	$(YACC) $^
 
 check: all
 	for i in $(TESTS_SOURCES); do \
-		echo "\033[36mtest of: $$i\033[33m"; \
+		echo -e "\033[36mtest of: $$i\033[33m"; \
 		if ./$(OUT) < $$i $$? -eq 0; then \
-			echo "\033[32mtest OK\033[0m"; \
+			echo -e "\033[32mtest OK\033[0m"; \
 		else \
-			echo "\033[31mtest NOT really OK\033[0m"; \
+			echo -e "\033[31mtest NOT really OK\033[0m"; \
 		fi \
 	done
 

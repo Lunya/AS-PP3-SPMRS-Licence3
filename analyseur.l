@@ -30,6 +30,7 @@ bool start_with_xml(char *, int);
 %x TEXT
 
 LABEL [[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+
+WORD [^[:space:]{\[\]}="]+
 
 %%
 
@@ -91,7 +92,7 @@ LABEL [[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+
 	}
 }
 
-({LABEL})\= {
+({LABEL})[[:space:]]*\= {
 	if (start_with_xml(yytext, yyleng))
 	{
 		REJECT;
@@ -105,7 +106,7 @@ LABEL [[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+
 	}
 }
     
-[[:alnum:].]+ { 
+{WORD} { 
 	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
 	strcpy(yylval.text, yytext);
 	fprintf(stderr, "Salut\n");
@@ -113,7 +114,7 @@ LABEL [[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+
 	return WORD;
 	} 
 	
-[[:alnum:].]+[[:space:]]+ { 
+{WORD}[[:space:]]+ { 
 	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
 	strcpy(yylval.text, yytext);
 	printf("MotWS : %s\n", yytext);
