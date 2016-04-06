@@ -7,8 +7,10 @@ YACC=bison -d -v
 OUT=spmrs
 TESTS_SOURCES=$(wildcard tests/*.jhtml)
 
-all: main.c analyseur.tab.c lex.yy.c
+spmrs: main.c analyseur.tab.c lex.yy.c
 	$(CC) $(CFLAGS) -o $(OUT) $^ $(LDLIBS)
+
+
 
 debug: main.c analyseur.tab.c lex.yy.c
 	$(CC) $(CFLAGS2) -o $(OUT) $^ $(LDLIBS)
@@ -18,6 +20,13 @@ lex.yy.c: analyseur.l analyseur.tab.h
 
 analyseur.tab.h analyseur.tab.c: analyseur.y
 	$(YACC) $^
+
+.PHONY: all test clean check 
+
+all: $(OUT)
+
+test: $(OUT) analyseur.input
+	./$< < analyseur.input
 
 check: all
 	for i in $(TESTS_SOURCES); do \

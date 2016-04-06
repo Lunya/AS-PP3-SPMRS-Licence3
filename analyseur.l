@@ -30,41 +30,35 @@ bool start_with_xml(char *, int);
 %x TEXT
 
 LABEL [[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+
-WORD [^[:space:]{\[\]}="\/]+
+WORD [^[:space:]{\[\]}=\"\/]+
 
 %%
 
-\"	{ return DOUBLE_QUOTE;}
-
-
-
-
+[[:space:]]* {}
 	
 [[:digit:]]+	{
-	printf("DIGIT\n");
 	yylval.number = atoi(yytext);
 	return NUMBER;
 }
 
 
+\"	        { printf("\"\n"); return '"';}
 
-"/"		{ printf("SLASH\n");return SLASH;}
+"{"		{ printf("{\n"); return '{'; }
 
-"{"		{ printf("LB\n");return LEFT_BRACKET; }
+"}"		{ printf("}\n"); return '}'; }
 
-"}"		{ printf("RB\n");return RIGHT_BRACKET; }
+"["		{ printf("[\n"); return '['; }
 
-"["		{ printf("LSB\n"); return LEFT_SQUARE_BRACKET; }
+"]"		{ printf("]\n"); return ']'; }
 
-"]"		{ printf("RSB\n");return RIGHT_SQUARE_BRACKET; }
+"("		{ printf("(\n"); return '('; }
 
-"("		{ printf("SLASH\n");return LEFT_PARENTHESIS; }
+")"		{ printf(")\n"); return ')'; }
 
-")"		{ printf("SLASH\n");return RIGHT_PARENTHESIS; }
+"="		{ printf("=\n"); return '='; }
 
-"="		{ printf("SLASH\n");return EQUAL; }
-
-
+"/"		{ printf("/\n"); return '/';}
 
 ({LABEL})\{ {
 	if (start_with_xml(yytext, yyleng))
@@ -73,12 +67,26 @@ WORD [^[:space:]{\[\]}="\/]+
 	}
 	else
 	{
-		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-		strcpy(yylval.text, yytext);
+		yylval.text = strndup(yytext,yyleng-1);
 		printf("LLB |%s|\n", yytext);
 		return LABEL_LEFT_BRACKET;
 	}
 }
+
+({LABEL})\/ {
+	if (start_with_xml(yytext, yyleng))
+	{
+		REJECT;
+	}
+	else
+	{
+		yylval.text = strndup(yytext,yyleng-1);
+		printf("LLB |%s|\n", yytext);
+		return LABEL_ATAG;
+	}
+}
+
+\][[:space:]]*\/  {return BR_SL;}
 
 ({LABEL})\[ {
 	if (start_with_xml(yytext, yyleng))
@@ -87,40 +95,16 @@ WORD [^[:space:]{\[\]}="\/]+
 	}
 	else
 	{
-		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-		strcpy(yylval.text, yytext);
+		yylval.text = strndup(yytext,yyleng-1);
 		printf("LLSB (%s)\n", yytext);
 		return LABEL_LEFT_SQUARE_BRACKET;
 	}
 }
 
-({LABEL})[[:space:]]*\= {
-	if (start_with_xml(yytext, yyleng))
-	{
-		REJECT;
-	}
-	else
-	{
-		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-		strcpy(yylval.text, yytext);
-		printf("LE (%s)\n", yytext);
-		return LABEL_EQUAL;
-	}
-}
-    
 {WORD} { 
-	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-	strcpy(yylval.text, yytext);
-	fprintf(stderr, "Salut\n");
+	yylval.text = strdup(yytext);
 	printf("MotW : %s\n", yytext);
 	return WORD;
-	} 
-	
-{WORD}[[:space:]]+ { 
-	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-	strcpy(yylval.text, yytext);
-	printf("MotWS : %s\n", yytext);
-	return WORD_SPACE;
 	} 
 
 . {printf("| %s |\n",yytext);}
