@@ -1,6 +1,7 @@
 CFLAGS=-Wall
 CFLAGS2=-std=c99 -g -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes
 LDLIBS= -lfl -ly -lm
+INCLUDES=color_print.c node.c
 CC=gcc
 LEX=flex
 YACC=bison -d -v
@@ -8,12 +9,12 @@ OUT=spmrs
 TESTS_SOURCES=$(wildcard tests/*.jhtml)
 
 spmrs: main.c analyseur.tab.c lex.yy.c
-	$(CC) $(CFLAGS) -o $(OUT) $^ $(LDLIBS)
+	$(CC) $(CFLAGS) -o $(OUT) $(INCLUDES) $^ $(LDLIBS)
 
 
 
 debug: main.c analyseur.tab.c lex.yy.c
-	$(CC) $(CFLAGS2) -o $(OUT) $^ $(LDLIBS)
+	$(CC) $(CFLAGS2) -o $(OUT) $(INCLUDES) $^ $(LDLIBS)
 
 lex.yy.c: analyseur.l analyseur.tab.h
 	$(LEX) -o $@ $<
@@ -30,13 +31,23 @@ test: $(OUT) analyseur.input
 
 check: all
 	for i in $(TESTS_SOURCES); do \
-		echo -e "\033[36mtest of: $$i\033[33m"; \
+		echo "\033[46m\033[30m\033[1mtest of: $$i\033[0m"; \
 		if ./$(OUT) < $$i $$? -eq 0; then \
-			echo -e "\033[32mtest OK\033[0m"; \
+			echo "\033[42mtest OK\033[0m"; \
 		else \
-			echo -e "\033[31mtest NOT really OK\033[0m"; \
+			echo "\033[41mtest NOT really OK\033[0m"; \
+		fi \
+	done
+
+errorcheck: all
+	for i in $(TESTS_SOURCES); do \
+		echo "\033[46m\033[30m\033[1mtest of: $$i\033[0m"; \
+		if gdb -ex=r --args ./$(OUT) < $$i $$? -eq 0; then \
+			echo "\033[42error test OK\033[0m"; \
+		else \
+			echo "\033[41error test NOT really OK\033[0m"; \
 		fi \
 	done
 
 clean:
-	rm analyseur.output lex.yy.c analyseur.tab.c analyseur.tab.h *.o
+	rm analyseur.output lex.yy.c analyseur.tab.c analyseur.tab.h

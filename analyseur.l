@@ -11,6 +11,7 @@
 */
 
 #include "analyseur.tab.h"
+#include "color_print.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -27,46 +28,38 @@ bool start_with_xml(char *, int);
 
 %option noinput nounput
 
-%x TEXT
-
-LABEL [[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+
-WORD [^[:space:]{\[\]}="\/]+
+%x STRINGS ATTRIBUTES STRINGS_ATTRIBUTES
 
 %%
 
-\"	{ return DOUBLE_QUOTE;}
-
-
-
-
 	
 [[:digit:]]+	{
-	printf("DIGIT\n");
+	printfC(TEXT_LIGHT_GRAY, "%s", yytext);
 	yylval.number = atoi(yytext);
 	return NUMBER;
 }
 
 
 
-"/"		{ printf("SLASH\n");return SLASH;}
+"/"		{ printfC(TEXT_MAGENTA, "/");return SLASH;}
 
-"{"		{ printf("LB\n");return LEFT_BRACKET; }
+"{"		{ printfC(TEXT_MAGENTA, "{");return LEFT_BRACKET; }
 
-"}"		{ printf("RB\n");return RIGHT_BRACKET; }
+"}"		{ printfC(TEXT_MAGENTA, "}");return RIGHT_BRACKET; }
 
-"["		{ printf("LSB\n"); return LEFT_SQUARE_BRACKET; }
+"["		{ printfC(TEXT_MAGENTA, "["); BEGIN ATTRIBUTES; return LEFT_SQUARE_BRACKET; }
 
-"]"		{ printf("RSB\n");return RIGHT_SQUARE_BRACKET; }
+<ATTRIBUTES>"]"		{ printfC(TEXT_MAGENTA, "]"); BEGIN INITIAL; return RIGHT_SQUARE_BRACKET; }
 
-"("		{ printf("SLASH\n");return LEFT_PARENTHESIS; }
+"("		{ printfC(TEXT_MAGENTA, "(");return LEFT_PARENTHESIS; }
 
-")"		{ printf("SLASH\n");return RIGHT_PARENTHESIS; }
+")"		{ printfC(TEXT_MAGENTA, ")");return RIGHT_PARENTHESIS; }
 
-"="		{ printf("SLASH\n");return EQUAL; }
+<ATTRIBUTES>"="		{ printfC(TEXT_MAGENTA, "=");return EQUAL; }
 
 
 
-({LABEL})\{ {
+<INITIAL,ATTRIBUTES>[[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+ {
 	if (start_with_xml(yytext, yyleng))
 	{
 		REJECT;
@@ -75,55 +68,52 @@ WORD [^[:space:]{\[\]}="\/]+
 	{
 		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
 		strcpy(yylval.text, yytext);
-		printf("LLB |%s|\n", yytext);
-		return LABEL_LEFT_BRACKET;
+		printfC(TEXT_YELLOW, "%s", yytext);
+		return LABEL;
 	}
 }
 
-({LABEL})\[ {
-	if (start_with_xml(yytext, yyleng))
-	{
-		REJECT;
-	}
-	else
-	{
-		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-		strcpy(yylval.text, yytext);
-		printf("LLSB (%s)\n", yytext);
-		return LABEL_LEFT_SQUARE_BRACKET;
-	}
+
+\" {
+	printfC(TEXT_BLUE, "\"");
+	BEGIN STRINGS;
 }
 
-({LABEL})[[:space:]]*\= {
-	if (start_with_xml(yytext, yyleng))
-	{
-		REJECT;
-	}
-	else
-	{
-		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-		strcpy(yylval.text, yytext);
-		printf("LE (%s)\n", yytext);
-		return LABEL_EQUAL;
-	}
+<STRINGS>\" {
+	printfC(TEXT_BLUE, "\"");
+	BEGIN INITIAL;
 }
-    
-{WORD} { 
+
+<STRINGS>[^[:space:]\"]+ {
 	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
 	strcpy(yylval.text, yytext);
-	fprintf(stderr, "Salut\n");
-	printf("MotW : %s\n", yytext);
-	return WORD;
-	} 
-	
-{WORD}[[:space:]]+ { 
+	printfC(TEXT_GREEN, "%s", yytext);
+	return STRING;
+}
+<STRINGS>[[:space:]]+ {
+	printfC(BACKGROUND_CYAN, "%s", yytext);
+	return SPACES;
+}
+
+<ATTRIBUTES>\" {
+	printfC(TEXT_BLUE, "\"");
+	BEGIN STRINGS_ATTRIBUTES;
+}
+
+<STRINGS_ATTRIBUTES>\" {
+	printfC(TEXT_BLUE, "\"");
+	BEGIN ATTRIBUTES;
+}
+
+<STRINGS_ATTRIBUTES>[^\"]* {
 	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
 	strcpy(yylval.text, yytext);
-	printf("MotWS : %s\n", yytext);
-	return WORD_SPACE;
-	} 
+	printfC(TEXT_GREEN, "%s", yytext);
+	return STRING;
+}
 
-. {printf("| %s |\n",yytext);}
+. {printfC(TEXT_RED, "<< %s >>",yytext);}
+
 %%
 
 

@@ -1,0 +1,58 @@
+#ifndef _COLOR_PRINT_H
+#define _COLOR_PRINT_H
+
+#include <stdio.h>
+#include <stdarg.h>
+
+#define RESET_TERMINAL 				0x00000
+#define FORMATTING_BOLD 			0x10000
+#define FORMATTING_DIM 				0x20000
+#define FORMATTING_UNDERLINED 		0x40000
+#define FORMATTING_BLINK 			0x50000
+#define FORMATTING_REVERSE 			0x70000
+#define FORMATTING_HIDDEN 			0x80000
+
+#define TEXT_DEFAULT 				0x02700
+#define TEXT_BLACK 					0x01E00
+#define TEXT_RED 					0x01F00
+#define TEXT_GREEN 					0x02000
+#define TEXT_YELLOW 				0x02100
+#define TEXT_BLUE 					0x02200
+#define TEXT_MAGENTA 				0x02300
+#define TEXT_CYAN 					0x02400
+#define TEXT_LIGHT_GRAY 			0x02500
+#define TEXT_DARK_GRAY 				0x05A00
+#define TEXT_LIGHT_RED 				0x05B00
+#define TEXT_LIGHT_GREEN 			0x05C00
+#define TEXT_LIGHT_YELLOW 			0x05D00
+#define TEXT_LIGHT_BLUE 			0x05E00
+#define TEXT_LIGHT_MAGENTA 			0x05F00
+#define TEXT_LIGHT_CYAN 			0x06000
+#define TEXT_WHITE 					0x06100
+
+#define BACKGROUND_DEFAULT 			0x00031
+#define BACKGROUND_BLACK 			0x00028
+#define BACKGROUND_RED 				0x00029
+#define BACKGROUND_GREEN 			0x0002A
+#define BACKGROUND_YELLOW 			0x0002B
+#define BACKGROUND_BLUE 			0x0002C
+#define BACKGROUND_MAGENTA 			0x0002D
+#define BACKGROUND_CYAN 			0x0002E
+#define BACKGROUND_LIGHT_GRAY 		0x0002F
+#define BACKGROUND_DARK_GRAY 		0x00064
+#define BACKGROUND_LIGHT_RED 		0x00065
+#define BACKGROUND_LIGHT_GREEN 		0x00066
+#define BACKGROUND_LIGHT_YELLOW 	0x00067
+#define BACKGROUND_LIGHT_BLUE 		0x00068
+#define BACKGROUND_LIGHT_MAGENTA 	0x00069
+#define BACKGROUND_LIGHT_CYAN 		0x0006A
+#define BACKGROUND_WHITE 			0x0006B
+
+
+int vfprintfC(FILE *, const int, const char *, va_list);
+
+int fprintfC(FILE *, const int, const char *, ...);
+
+int printfC(const int, const char *, ...);
+
+#endif //_COLOR_PRINT_H
