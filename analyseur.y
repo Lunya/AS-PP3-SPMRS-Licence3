@@ -9,73 +9,138 @@
  *     - Sarain Shervin
  * Copyright (c) 2015-2016
 */
+#include "color_print.h"
+#include "node.h"
 #include <stdio.h>
 
 int yylex(void);
-void yyerror(char*);
+void yyerror(const char*);
 %}
 
 %union {
 	int number;
-	char* text;
+	char * text;
+	struct tree * node;
+	struct attributes * attribute;
 }
 
-%token LABEL LEFT_BRACKET RIGHT_BRACKET LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS EQUAL END_OF_FILE DOUBLE_QUOTE SLASH
+%token LEFT_BRACKET RIGHT_BRACKET LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS EQUAL SLASH
 %token <number> NUMBER
-%token <text> text WORD WORD_SPACE LABEL_LEFT_BRACKET LABEL_LEFT_SQUARE_BRACKET LABEL_EQUAL
-
+%token <text> STRING SPACES LABEL
+%type <node> tag tags string content
+%type <attribute> attribute
 %start tags
 %error-verbose
 %%
 //Une forêt de balises
 tags:
-			tag tags                                       {printf("mtags\n");}
-			| tag                                          {printf("otags\n");}
-			| LEFT_BRACKET  tags  RIGHT_BRACKET            {printf("stags\n");}
-			| LEFT_BRACKET  tags  RIGHT_BRACKET tags            {printf("sstags\n");}
-                        ;
+	tag tags                                       
+	{
+		if ($1 != NULL)
+		{
+			$$ = $1;
+			addBrother($$, $2);
+		}
+		else
+		{
+			$$ = NULL;
+		}
+	}
+	| tag {
+		if ($1 != NULL)
+		{
+			$$ = $1;
+		}
+		else
+		{
+			$$ = NULL;
+		}
+	}
+	| LEFT_BRACKET  tags  RIGHT_BRACKET {
+		if ($2 != NULL)
+		{
+			$$ = $2;
+		}
+		else
+		{
+			$$ = NULL;
+		}
+	}
+	| LEFT_BRACKET  tags  RIGHT_BRACKET tags            
+	{
+		$$ = $2;
+		addBrother($$, $4);
+	}
+    ;
 //Balise
 tag:
-			LABEL_LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET LEFT_BRACKET content RIGHT_BRACKET                {printf("Atag\n");}
-			| LABEL_LEFT_BRACKET content RIGHT_BRACKET          {printf("WAtag\n");}
-			| LEFT_BRACKET RIGHT_BRACKET {printf("VOID\n");}
-                        ;
+	LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET LEFT_BRACKET content RIGHT_BRACKET                
+	{
+		$$ = createNode($1, false, false, TREE);
+		addAttribute($$, $3);
+		addChild($$, $6);
+	}
+	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SLASH
+	{
+    	$$ = createNode($1, true, false, TREE);
+    	addAttribute($$, $3); //$$ = Node ATAG actuel, $2 = L'attribut.
+    } 
+	| LABEL LEFT_BRACKET content RIGHT_BRACKET          
+	{
+		$$ = createNode($1, false, false, TREE);
+		addChild($$,$3);
+	}
+	| LEFT_BRACKET RIGHT_BRACKET {$$ = NULL;}
+	| LABEL SLASH {$$ = createNode($1, true, false, TREE);}
+    ;
 
 //Un ensemble d'attributs
 attribute:
-			LABEL_EQUAL DOUBLE_QUOTE stringgroup DOUBLE_QUOTE               {printf("attribute\n");}
-			| LABEL_EQUAL DOUBLE_QUOTE stringgroup DOUBLE_QUOTE attribute   {printf("attribute\n");}
-                        ;
+	LABEL EQUAL string               {$$ = createAttribute($1,$3);}
+	| LABEL EQUAL string attribute   
+	{
+		$$ = createAttribute($1,$3);
+		addAttributeBrother($$, $4);
+	}
+    ;
                         
 //Contenu d'une balise : Ensemble de textes, de balises ou de balises autofermantes.
 content:
-			DOUBLE_QUOTE textgroup DOUBLE_QUOTE content         {printf("content\n");}
-			| tag content               {printf("content\n");}
-			| atag content              {printf("content\n");}
-			| DOUBLE_QUOTE textgroup DOUBLE_QUOTE               {printf("TC content\n");}
-			| tag                       {printf("content\n");}
-			| atag                      {printf("content\n");} 
-			| LEFT_BRACKET content RIGHT_BRACKET    {printf("A contents\n");}
-			;
+	string content         
+	{
+		$$=$1;
+		addBrother($$, $2);
+	}
+	| tag content               
+	{
+		$$=$1;
+		addBrother($$, $2);
+	}
+	| string   {$$=$1;}
+	| tag                       			{$$=$1;}
+	| LEFT_BRACKET content RIGHT_BRACKET    {$$=$2;}
+	;
 
 // Ensemble de mot
-textgroup:
-			WORD textgroup                {printf("textgroup\n");}
-			| WORD_SPACE textgroup		  {printf("textgroup\n");}
-			| WORD                        {printf("textgroup\n");}
-			| WORD_SPACE				  {printf("textgroup\n");}
-                        ;
+string:
+	STRING string 
+	{
+		$$ = createNode($1, true, false, WORD);
+		addBrother($$, $2);
+	}
+	| SPACES string
+	{
+		$$ = $2;
+		addSpace($$);
+	}
+	| STRING {$$ = createNode($1, false, false, WORD);}
+	| SPACES {$$ = createNode("", false, true, WORD);}
+	;
 
-stringgroup:
-			WORD stringgroup              {printf("stringgroup\n");}
-			| WORD_SPACE stringgroup	  {printf("stringgroup\n");}
-			| WORD                        {printf("stringgroup\n");}
-			| WORD_SPACE				  {printf("stringgroup\n");}
-                        ;
-//Balise autofermante
-atag:
-            WORD SLASH {printf("ATAG\n");}
-            | WORD_SPACE SLASH {printf("SATAG\n");} 
-            | LABEL_LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SLASH {printf("Att ATAG\n");} 
-                        ;
 %%
+
+void yyerror(const char * err)
+{
+	fflush(stdout);
+	fprintfC(stderr, BACKGROUND_RED|TEXT_WHITE, "%s\n", err);
+}
