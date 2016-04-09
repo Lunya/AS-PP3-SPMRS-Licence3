@@ -1,3 +1,6 @@
+#ifndef _NODE_H
+#define _NODE_H
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -23,14 +26,20 @@ struct tree {
     struct tree * right;       //frère droit
 };
 
-struct tree * createNode(char * label);
+struct tree * createNode(char * label, bool nullary, bool space, enum type tp);
 
 struct attributes * createAttribute(char * key, char * value);
 
+void addAttributeBrother(struct attributes * attr, struct attributes * brother);
 
-
-void addAttribute(struct tree * node, struct attribute * attr);
+void addAttribute(struct tree * node, struct attributes * attr);
 
 void addChild(struct tree * node, struct tree * daughter);
 
+void addBrother(struct tree * node, struct tree * brother);
+
+void addSpace(struct tree * node);
+
 void printNode(struct tree * node);
+
+#endif //_NODE_H

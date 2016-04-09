@@ -33,7 +33,7 @@ bool start_with_xml(char *, int);
 %%
 
 	
-[[:digit:]]+	{
+[[:digit:]]+ {
 	printfC(TEXT_LIGHT_GRAY, "%s", yytext);
 	yylval.number = atoi(yytext);
 	return NUMBER;
@@ -41,21 +41,47 @@ bool start_with_xml(char *, int);
 
 
 
-"/"		{ printfC(TEXT_MAGENTA, "/");return SLASH;}
+"/"	{
+	printfC(TEXT_MAGENTA, "/");
+	return SLASH;
+}
 
-"{"		{ printfC(TEXT_MAGENTA, "{");return LEFT_BRACKET; }
+"{"	{
+	printfC(TEXT_MAGENTA, "{");
+	return LEFT_BRACKET;
+}
 
-"}"		{ printfC(TEXT_MAGENTA, "}");return RIGHT_BRACKET; }
+"}"	{
+	printfC(TEXT_MAGENTA, "}");
+	return RIGHT_BRACKET;
+}
 
-"["		{ printfC(TEXT_MAGENTA, "["); BEGIN ATTRIBUTES; return LEFT_SQUARE_BRACKET; }
+"["	{
+	printfC(TEXT_MAGENTA, "[");
+	BEGIN ATTRIBUTES;
+	 return LEFT_SQUARE_BRACKET;
+}
 
-<ATTRIBUTES>"]"		{ printfC(TEXT_MAGENTA, "]"); BEGIN INITIAL; return RIGHT_SQUARE_BRACKET; }
+<INITIAL,ATTRIBUTES>"]"	{
+	printfC(TEXT_MAGENTA, "]");
+	BEGIN INITIAL;
+	return RIGHT_SQUARE_BRACKET;
+}
 
-"("		{ printfC(TEXT_MAGENTA, "(");return LEFT_PARENTHESIS; }
+"("	{
+	printfC(TEXT_MAGENTA, "(");
+	return LEFT_PARENTHESIS;
+}
 
-")"		{ printfC(TEXT_MAGENTA, ")");return RIGHT_PARENTHESIS; }
+")"	{
+	printfC(TEXT_MAGENTA, ")");
+	return RIGHT_PARENTHESIS;
+}
 
-<ATTRIBUTES>"="		{ printfC(TEXT_MAGENTA, "=");return EQUAL; }
+<INITIAL,ATTRIBUTES>"="	{
+	printfC(TEXT_MAGENTA, "=");
+	return EQUAL;
+}
 
 
 
@@ -73,6 +99,10 @@ bool start_with_xml(char *, int);
 	}
 }
 
+[[:space:]]+ {
+	printfC(BACKGROUND_BLUE, "%s", yytext);
+	return SPACES;
+}
 
 \" {
 	printfC(TEXT_BLUE, "\"");
@@ -92,7 +122,7 @@ bool start_with_xml(char *, int);
 }
 <STRINGS>[[:space:]]+ {
 	printfC(BACKGROUND_CYAN, "%s", yytext);
-	return SPACES;
+	return STRING_SPACES;
 }
 
 <ATTRIBUTES>\" {

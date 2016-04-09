@@ -31,7 +31,7 @@ test: $(OUT) analyseur.input
 
 check: all
 	for i in $(TESTS_SOURCES); do \
-		echo "\033[46m\033[30m\033[1mtest of: $$i\033[0m"; \
+		echo "\033[1;30;46mtest of: $$i\033[0m"; \
 		if ./$(OUT) < $$i $$? -eq 0; then \
 			echo "\033[42mtest OK\033[0m"; \
 		else \
@@ -41,7 +41,7 @@ check: all
 
 errorcheck: all
 	for i in $(TESTS_SOURCES); do \
-		echo "\033[46m\033[30m\033[1mtest of: $$i\033[0m"; \
+		echo "\033[1;30;46mtest of: $$i\033[0m"; \
 		if gdb -ex=r --args ./$(OUT) < $$i $$? -eq 0; then \
 			echo "\033[42error test OK\033[0m"; \
 		else \
