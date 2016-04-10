@@ -22,7 +22,7 @@ struct tree {
     bool space;                //nœud suivi d'un espace
     enum type tp;              //type du nœud. nullary doit être true s tp vaut word
     struct attributes * attr;  //attributs du nœud
-    struct tree * daughters;   //fils gauche, qui doit être NULL si nullary est true
+    struct tree * daughters;   //WORD gauche, qui doit être NULL si nullary est true
     struct tree * right;       //frère droit
 };
 
@@ -41,5 +41,7 @@ void addBrother(struct tree * node, struct tree * brother);
 void addSpace(struct tree * node);
 
 void printNode(struct tree * node);
+
+void printNodeGraph(struct tree * node, char * out);
 
 #endif //_NODE_H
