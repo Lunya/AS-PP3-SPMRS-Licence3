@@ -10,11 +10,17 @@
 */
 
 #include "analyseur.tab.h"
+#include "node.h"
 
 #include <stdio.h>
 
+extern struct tree * root;
 
-int main(void)
+int main(int argc, char **argv)
 {
-	return yyparse();
+	int retCode;
+	retCode = yyparse();
+	printNode(root);
+	printNodeGraph(root, argv[1]);
+	return retCode;
 }

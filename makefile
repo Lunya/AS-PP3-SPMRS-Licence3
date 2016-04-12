@@ -33,11 +33,12 @@ test: $(OUT) analyseur.input
 check: all
 	for i in $(TESTS_SOURCES); do \
 		echo -e "\033[1;30;46mtest of: $$i\033[0m"; \
-		if ./$(OUT) < $$i $$? -eq 0; then \
+		if ./$(OUT) $$i.dot < $$i $$? -eq 0; then \
 			echo -e "\033[42mtest OK\033[0m"; \
 		else \
 			echo -e "\033[41mtest NOT really OK\033[0m"; \
-		fi \
+		fi; \
+		dot -Tsvg $$i.dot -o $$i.svg; \
 	done
 
 errorcheck: all

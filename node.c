@@ -102,29 +102,25 @@ void printNodeRec(struct tree * node, int level)
 		tabs[i] = '\t';
 
 	printfC(TEXT_RED, "%s%s", tabs, node->label);
-	if (node->space)
+	if (node->attr != NULL)
 	{
-		printfC(BACKGROUND_BLUE, " ");
+		printfC(TEXT_MAGENTA, "[ ");
+		struct attributes * iteratorAttribute = node->attr;
+		while (iteratorAttribute != NULL)
+		{
+			printfC(TEXT_YELLOW, "%s", iteratorAttribute->key);
+			printfC(TEXT_MAGENTA, " = ");
+			printfC(TEXT_GREEN, "%s ", iteratorAttribute->value);
+			iteratorAttribute = iteratorAttribute->next;
+		}
+		printfC(TEXT_MAGENTA, "]");
 	}
-	if (node->nullary)
+	if (node->nullary && node->tp == TREE)
 	{
 		printfC(TEXT_MAGENTA, "/\n");
 	}
-	else
+	else if (node->tp == TREE)
 	{
-		if (node->attr != NULL)
-		{
-			printfC(TEXT_MAGENTA, "[ ");
-			struct attributes * iteratorAttribute = node->attr;
-			while (iteratorAttribute != NULL)
-			{
-				printfC(TEXT_YELLOW, "%s", iteratorAttribute->key);
-				printfC(TEXT_MAGENTA, " = ");
-				printfC(TEXT_GREEN, "%s ", iteratorAttribute->value);
-				iteratorAttribute = iteratorAttribute->next;
-			}
-			printfC(TEXT_MAGENTA, "]");
-		}
 		printfC(TEXT_MAGENTA, "\n%s{\n", tabs);
 		if (node->daughters != NULL)
 		{
@@ -136,6 +132,10 @@ void printNodeRec(struct tree * node, int level)
 			}
 		}
 		printfC(TEXT_MAGENTA, "%s}\n", tabs);
+	}
+	if (node->space)
+	{
+		printfC(BACKGROUND_BLUE, " \n");
 	}
 }
 
@@ -211,9 +211,9 @@ void printNodeGraphRec(struct tree * node, FILE * fd, unsigned int parent)
 <tr><td border=\"1\">%s</td></tr></table>>, shape=none];\n",
 			attributeCounter, node->attr->key, node->attr->value);
 		struct attributes * iteratorAttribute = node->attr->next;
+		attributeCounter ++;
 		while (iteratorAttribute != NULL)
 		{
-			attributeCounter ++;
 			fprintf(fd, "\t\"attribute%d\" -> \"attribute%d\" [color=\"#0088ff\"];\n",
 				attributeCounter - 1, attributeCounter);
 			fprintf(fd, "\t\"node%d\" -> \"attribute%d\" [color=\"#0088ff\", style=dotted];\n",
@@ -225,6 +225,7 @@ void printNodeGraphRec(struct tree * node, FILE * fd, unsigned int parent)
 			/*fprintf(fd, "\t\"attribute%d\" -> \"attribute%d\" [color=\"#ff0088\", label=\"%s\"];\n",
 				attributeCounter, attributeCounter + 2, iteratorAttribute->value);*/
 			iteratorAttribute = iteratorAttribute->next;
+			attributeCounter ++;
 		}
 	}
 	if (node->daughters != NULL)

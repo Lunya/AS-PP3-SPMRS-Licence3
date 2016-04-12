@@ -13,6 +13,8 @@
 #include "node.h"
 #include <stdio.h>
 
+struct tree * root = NULL;
+
 int yylex(void);
 void yyerror(const char*);
 %}
@@ -44,14 +46,16 @@ tags:
 			addBrother($$, $2);
 		}
 		else
-		{ $$ = NULL; }
+		{ $$ = NULL;}
+		root = $$;
 	}
 	| tag
 	{
 		if ($1 != NULL)
-		{ $$ = $1; }
+		{ $$ = $1;}
 		else
-		{ $$ = NULL; }
+		{ $$ = NULL;}
+		root = $$;
 	}
 	| LEFT_BRACKET  tags  RIGHT_BRACKET
 	{
@@ -59,7 +63,8 @@ tags:
 		if ($2 != NULL)
 		{ $$ = $2; }
 		else
-		{ $$ = NULL; }
+		{ $$ = NULL;}
+		root = $$;
 	}
 	| LEFT_BRACKET  tags  RIGHT_BRACKET tags
 	{
@@ -71,6 +76,7 @@ tags:
 		}
 		else
 		{ $$ = NULL; }
+		root = $$;
 	}
 	| SPACES tags
 	{
@@ -78,8 +84,9 @@ tags:
 		{ $$ = $2; }
 		else
 		{ $$ = NULL; }
+		root = $$;
 	}
-	| SPACES { $$ = NULL; }
+	| SPACES { $$ = NULL; root = $$;}
 	;
 //Balise
 tag:
@@ -98,7 +105,7 @@ tag:
 	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SLASH
 	{
 		$$ = createNode($1, true, false, TREE);
-		addAttribute($$, $3); //$$ = Node ATAG actuel, $2 = L'attribut.
+		addAttribute($$, $3); //$$ = Node ATAG actuel, $3 = L'attribut.
 	} 
 	| LABEL LEFT_BRACKET content RIGHT_BRACKET
 	{
