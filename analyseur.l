@@ -46,12 +46,12 @@ bool start_with_xml(char *, int);
 	return SLASH;
 }
 
-"{"	{
+"{"[[:space:]]*	{
 	printfC(TEXT_MAGENTA, "{");
 	return LEFT_BRACKET;
 }
 
-"}"	{
+[[:space:]]*"}"	{
 	printfC(TEXT_MAGENTA, "}");
 	return RIGHT_BRACKET;
 }
