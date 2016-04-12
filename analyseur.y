@@ -89,7 +89,19 @@ tag:
 		addAttribute($$, $3);
 		addChild($$, $6);
 	}
+	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET LEFT_BRACKET content SPACES RIGHT_BRACKET
+	{
+		$$ = createNode($1, false, false, TREE);
+		addAttribute($$, $3);
+		addChild($$, $6);
+	}
 	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SPACES LEFT_BRACKET content RIGHT_BRACKET
+	{
+		$$ = createNode($1, false, false, TREE);
+		addAttribute($$, $3);
+		addChild($$, $7);
+	}
+	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SPACES LEFT_BRACKET content SPACES RIGHT_BRACKET
 	{
 		$$ = createNode($1, false, false, TREE);
 		addAttribute($$, $3);
@@ -106,7 +118,14 @@ tag:
 		$$ = createNode($1, false, false, TREE);
 		addChild($$,$3);
 	}
+	| LABEL LEFT_BRACKET content SPACES RIGHT_BRACKET
+	{
+		printf("test 3\n");
+		$$ = createNode($1, false, false, TREE);
+		addChild($$,$3);
+	}
 	| LEFT_BRACKET RIGHT_BRACKET {$$ = NULL;}
+	| LEFT_BRACKET SPACES RIGHT_BRACKET {$$ = NULL;}
 	| LABEL SLASH
 	{
 		$$ = createNode($1, true, false, TREE);
@@ -143,6 +162,7 @@ content:
 	| string   {$$=$1;}
 	| tag                       			{$$=$1;}
 	| LEFT_BRACKET content RIGHT_BRACKET    {$$=$2;}
+	| LEFT_BRACKET content SPACES RIGHT_BRACKET    {$$=$2;}
 	| SPACES content { $$ = $2; }
 	| SPACES { $$ = NULL; }
 	;
