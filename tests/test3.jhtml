@@ -1,4 +1,13 @@
-{{div{"contenu1"} div{"contenu2"}}
-	a[href="www.labri.fr"]{"LaBRI"}
-	{{} {p{"contenu3"}}}
+{
+    {
+        div{"contenu1"}
+        div{"contenu2"}
+    }
+    a[href="www.labri.fr"]{"LaBRI"}
+    {
+        {}
+        {
+            p{"contenu3"}
+        }
+    }
 }

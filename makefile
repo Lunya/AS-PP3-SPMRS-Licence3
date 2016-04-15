@@ -52,4 +52,4 @@ errorcheck: all
 	done
 
 clean:
-	rm analyseur.output lex.yy.c analyseur.tab.c analyseur.tab.h
+	rm analyseur.output lex.yy.c analyseur.tab.c analyseur.tab.h tests/*.dot tests/*.svg

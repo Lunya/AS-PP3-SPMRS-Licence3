@@ -10,7 +10,7 @@
  * Copyright (c) 2015-2016
 */
 #include "color_print.h"
-#include "node.h"
+#include "ast.h"
 #include <stdio.h>
 
 struct tree * root = NULL;
@@ -40,13 +40,13 @@ void yyerror(const char*);
 tags:
 	tag tags
 	{
-		if ($1 != NULL)
-		{
-			$$ = $1;
-			addBrother($$, $2);
-		}
-		else
-		{ $$ = NULL;}
+                if ($1 != NULL)
+                {
+                        $$ = $1;
+                        addBrother($$, $2);
+                }
+                else
+                {$$ = NULL;}
 		root = $$;
 	}
 	| tag
@@ -54,12 +54,12 @@ tags:
 		if ($1 != NULL)
 		{ $$ = $1;}
 		else
-		{ $$ = NULL;}
+                {$$ = NULL;}
 		root = $$;
 	}
 	| LEFT_BRACKET  tags  RIGHT_BRACKET
 	{
-		printf("test 1\n");
+
 		if ($2 != NULL)
 		{ $$ = $2; }
 		else
@@ -68,22 +68,22 @@ tags:
 	}
 	| LEFT_BRACKET  tags  RIGHT_BRACKET tags
 	{
-		printf("test 2\n");
+
 		if ($2 != NULL)
 		{
 			$$ = $2;
-			addBrother($$, $4);
+                        addBrother($$, $4);
 		}
 		else
-		{ $$ = NULL; }
+                { $$ = NULL; }
 		root = $$;
 	}
 	| SPACES tags
 	{
-		if ($2 == NULL)
+                if ($2 != NULL)
 		{ $$ = $2; }
 		else
-		{ $$ = NULL; }
+                { $$ = NULL; }
 		root = $$;
 	}
 	| SPACES { $$ = NULL; root = $$;}
@@ -92,31 +92,35 @@ tags:
 tag:
 	LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET LEFT_BRACKET content RIGHT_BRACKET
 	{
-		$$ = createNode($1, false, false, TREE);
-		addAttribute($$, $3);
-		addChild($$, $6);
+                $$ = mk_tree($1, false, false, false, $3, $6);
+                //$$ = createNode($1, false, false, TREE);
+                //addAttribute($$, $3);
+                //addChild($$, $6);
 	}
 	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SPACES LEFT_BRACKET content RIGHT_BRACKET
 	{
-		$$ = createNode($1, false, false, TREE);
-		addAttribute($$, $3);
-		addChild($$, $7);
+                $$ = mk_tree($1, false, false, false, $3, $7);
+                //$$ = createNode($1, false, false, TREE);
+		//addAttribute($$, $3);
+		//addChild($$, $7);
 	}
 	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SLASH
 	{
-		$$ = createNode($1, true, false, TREE);
-		addAttribute($$, $3); //$$ = Node ATAG actuel, $3 = L'attribut.
+                $$ = mk_tree($1, false, false, false, $3, NULL);
+                //$$ = createNode($1, true, false, TREE);
+                //addAttribute($$, $3); //$$ = Node ATAG actuel, $3 = L'attribut.
 	} 
 	| LABEL LEFT_BRACKET content RIGHT_BRACKET
-	{
-		printf("test 3\n");
-		$$ = createNode($1, false, false, TREE);
-		addChild($$,$3);
+        {
+                $$ = mk_tree($1, false, false, false, NULL, $3);
+                //$$ = createNode($1, false, false, TREE);
+                //addChild($$,$3);
 	}
 	| LEFT_BRACKET RIGHT_BRACKET {$$ = NULL;}
 	| LABEL SLASH
-	{
-		$$ = createNode($1, true, false, TREE);
+        {
+                $$ = mk_tree($1, false, false, false, NULL, NULL);
+                //$$ = createNode($1, true, false, TREE);
 	}
 	;
 
@@ -145,7 +149,7 @@ content:
 	| tag content
 	{
 		$$=$1;
-		addBrother($$, $2);
+                addBrother($$, $2);
 	}
 	| string   {$$=$1;}
 	| tag                       			{$$=$1;}
