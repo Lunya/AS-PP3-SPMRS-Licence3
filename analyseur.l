@@ -44,17 +44,17 @@ let[[:space:]]* {
 	return LET;
 }
 
-\-\>[[:space:]]* {
+[[:space:]]*\-\>[[:space:]]* {
 	printfC(TEXT_CYAN, "%s", yytext);
 	return ARROW;
 }
 
-fun[[:space:]]* {
+[[:space:]]*fun[[:space:]]* {
 	printfC(TEXT_CYAN, "%s", yytext);
 	return FUNT;
 }
 
-rec[[:space:]]* {
+[[:space:]]*rec[[:space:]]* {
 	printfC(TEXT_CYAN, "%s", yytext);
 	return REC;
 }

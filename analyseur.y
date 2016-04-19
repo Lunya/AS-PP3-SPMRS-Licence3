@@ -37,27 +37,32 @@ void yyerror(const char*);
 %%
 //TODO : Enlever tous ces token d'espaces
 decl:
-	LET LABEL '=' tags ';' decl 				{printf("TODO : Affect 'tag' to the variable 'label' \n");}
-	| LET LABEL SPACES '=' SPACES tags ';' SPACES decl 	{printf("TODO : Affect 'tag' to the variable 'label' \n");}
-	| LET LABEL '=' tags IN tags ';' 			{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
-	| LET LABEL SPACES '=' SPACES tags IN tags ';' 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
-	| tags WHERE LABEL '=' tags ';'				{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
-	| tags WHERE LABEL SPACES '=' SPACES tags ';' 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
-	| LET LABEL args '=' func ';' {}
-	| LET LABEL '=' FUNT args ARROW func ';' {}
-	| LET LABEL args '=' FUNT args ARROW func ';' {}
-	| LET REC LABEL args '=' FUNT args ARROW func ';' {}
+	LET LABEL '=' tags 				{printf("TODO : Affect 'tag' to the variable 'label' \n");}
+	| LET LABEL SPACES '=' SPACES tags 	{printf("TODO : Affect 'tag' to the variable 'label' \n");}
+	| LET LABEL '=' tags IN tags 			{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
+	| LET LABEL SPACES '=' SPACES tags IN tags 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
+	| tags WHERE LABEL '=' tags 				{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
+	| tags WHERE LABEL SPACES '=' SPACES tags 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
+	| LET LABEL SPACES args SPACES '=' func {}
+	| LET LABEL SPACES '=' FUNT args ARROW func {}
+	| LET LABEL SPACES args SPACES '=' FUNT args ARROW func {}
+	| LET REC LABEL SPACES args SPACES '=' FUNT args ARROW func {}
 	| tags {}
-	| %empty {}
+	| decl ';' SPACES decl
+	| decl ';' decl
+	| %empty
 	;
 
 args:
-	LABEL args {}
+	LABEL SPACES LABEL {}
 	| LABEL {}
 	;
-
+//Pour l'instant, le contenu d'une fonction n'est pas traite, mais pour tout de 
+//même traite le reste dela grammaire, temporairement, je dis que le contenu 
+//d'une fonction est 'fun'
 func:
-	%empty {}
+	FUNT {}
+	| %empty {}
 	;
 	
 //Une forêt de balises

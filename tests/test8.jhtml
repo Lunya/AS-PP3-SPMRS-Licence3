@@ -1,4 +1,4 @@
 let f v1 v2 = fun;
-let g  = fun z t -> fun;
+let g = fun z t -> fun;
 let f x1 x2 = fun y1 y2 ->fun;
 let rec h x1 x2 = fun y1 y2 -> fun;
