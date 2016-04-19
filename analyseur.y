@@ -13,7 +13,7 @@
 #include "ast.h"
 #include <stdio.h>
 
-struct tree * root = NULL;
+struct ast * root = NULL;
 
 int yylex(void);
 void yyerror(const char*);
@@ -22,7 +22,7 @@ void yyerror(const char*);
 %union {
 	int number;
 	char * text;
-	struct tree * node;
+        struct ast * node;
 	struct attributes * attribute;
 }
 
@@ -41,27 +41,24 @@ tags:
 	tag tags
 	{
                 if ($1 != NULL)
-                {
-                        $$ = $1;
-                        addBrother($$, $2);
-                }
+                { $$ = mk_forest(1, $1, $2); }
                 else
-                {$$ = NULL;}
+                { $$ = NULL; }
 		root = $$;
 	}
 	| tag
 	{
 		if ($1 != NULL)
-		{ $$ = $1;}
+                { $$ = mk_forest(1, $1, NULL); }
 		else
-                {$$ = NULL;}
+                { $$ = NULL; }
 		root = $$;
 	}
 	| LEFT_BRACKET  tags  RIGHT_BRACKET
 	{
 
 		if ($2 != NULL)
-		{ $$ = $2; }
+                { $$ = mk_forest(1, $2, NULL); }
 		else
 		{ $$ = NULL;}
 		root = $$;
@@ -70,10 +67,7 @@ tags:
 	{
 
 		if ($2 != NULL)
-		{
-			$$ = $2;
-                        addBrother($$, $4);
-		}
+                { $$ = mk_forest(1, $2, $4); }
 		else
                 { $$ = NULL; }
 		root = $$;
@@ -81,7 +75,7 @@ tags:
 	| SPACES tags
 	{
                 if ($2 != NULL)
-		{ $$ = $2; }
+                { $$ = mk_forest(1, $2, NULL); }
 		else
                 { $$ = NULL; }
 		root = $$;
@@ -92,86 +86,56 @@ tags:
 tag:
 	LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET LEFT_BRACKET content RIGHT_BRACKET
 	{
-                $$ = mk_tree($1, false, false, false, $3, $6);
-                //$$ = createNode($1, false, false, TREE);
-                //addAttribute($$, $3);
-                //addChild($$, $6);
+                $$ = mk_tree($1, false, false, $3, $6);
 	}
 	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SPACES LEFT_BRACKET content RIGHT_BRACKET
 	{
-                $$ = mk_tree($1, false, false, false, $3, $7);
-                //$$ = createNode($1, false, false, TREE);
-		//addAttribute($$, $3);
-		//addChild($$, $7);
+                $$ = mk_tree($1, false, false, $3, $7);
 	}
 	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SLASH
 	{
-                $$ = mk_tree($1, false, false, false, $3, NULL);
-                //$$ = createNode($1, true, false, TREE);
-                //addAttribute($$, $3); //$$ = Node ATAG actuel, $3 = L'attribut.
+                $$ = mk_tree($1, false, true, $3, NULL);
 	} 
 	| LABEL LEFT_BRACKET content RIGHT_BRACKET
         {
-                $$ = mk_tree($1, false, false, false, NULL, $3);
-                //$$ = createNode($1, false, false, TREE);
-                //addChild($$,$3);
+                $$ = mk_tree($1, false, false, NULL, $3);
 	}
 	| LEFT_BRACKET RIGHT_BRACKET {$$ = NULL;}
 	| LABEL SLASH
         {
-                $$ = mk_tree($1, false, false, false, NULL, NULL);
-                //$$ = createNode($1, true, false, TREE);
+                $$ = mk_tree($1, false, true, NULL, NULL);
 	}
 	;
 
 //Un ensemble d'attributs
 attribute:
-	LABEL EQUAL string
-	{
-		$$ = createAttribute($1,$3->label);
-	}
-	| LABEL EQUAL string attribute   
-	{
-		$$ = createAttribute($1,$3->label);
-		addAttributeBrother($$, $4);
-	}
+        LABEL EQUAL string { $$ = mk_attributes($1, $3->node->forest->head->node->word->str, NULL); }
+        | LABEL EQUAL string attribute { $$ = mk_attributes($1, $3->node->forest->head->node->word->str, $4); }
 	| SPACES { $$ = NULL; }
 	| SPACES attribute { $$ = $2; }
 	;
 
 //Contenu d'une balise : Ensemble de textes, de balises ou de balises autofermantes.
 content:
-	string content
-	{
-		$$=$1;
-		addBrother($$, $2);
-	}
-	| tag content
-	{
-		$$=$1;
-                addBrother($$, $2);
-	}
-	| string   {$$=$1;}
-	| tag                       			{$$=$1;}
-	| LEFT_BRACKET content RIGHT_BRACKET    {$$=$2;}
-	| SPACES content { $$ = $2; }
+        string content { $$ = mk_forest(1, $1, $2); }
+        | tag content {  $$ = mk_forest(1, $1, $2); }
+        | string   { mk_forest(1, $1, NULL); }
+        | tag      { mk_forest(1, $1, NULL); }
+        | LEFT_BRACKET content RIGHT_BRACKET    { mk_forest(1, $2, NULL); }
+        | SPACES content { mk_forest(1, $2, NULL); }
 	| SPACES { $$ = NULL; }
 	;
 
 // Ensemble de mot
 string: // tester avec un espace juste après les "
-	STRING string 
-	{
-		$$ = createNode($1, true, false, WORD);
-		addBrother($$, $2);
-	}
+        STRING string { $$ = mk_forest(1, mk_word($1), $2); }
 	| STRING_SPACES string
-	{
-		$$ = $2;
-		addSpace($$);
-	}
-	| STRING {$$ = createNode($1, false, false, WORD);}
-	| STRING_SPACES {$$ = createNode("", false, true, WORD);}
+        {
+                $$ = $2;
+                add_space($$);
+        }
+        | STRING { $$ = mk_forest(1, mk_word($1), NULL); }
+        | STRING_SPACES { $$ = mk_forest(1, add_space(mk_word("")), NULL); }
 	;
 
 %%

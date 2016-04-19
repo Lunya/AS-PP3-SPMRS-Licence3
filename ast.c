@@ -28,7 +28,7 @@ struct ast * mk_unaryop(enum unaryop unaryop){
 struct ast * mk_var(char * var){
     struct ast * e = mk_node();
     e->type = VAR;
-    e->node->str = var;
+    e->node->word->str = var;
     return e;
 
 }
@@ -49,10 +49,18 @@ struct ast * mk_app(struct ast * fun, struct ast * arg){
 struct ast * mk_word(char * str){
     struct ast * e = mk_node();
     e->type = WORD;
-    e->node->str = str;
+    e->node->word = malloc(sizeof(struct word));
+    e->node->word->str = str;
+    e->node->word->space = false;
+
     return e;
 };
-struct ast * mk_tree(char * label, bool is_value, bool nullary, bool space,
+struct ast * add_space(struct ast * word){
+    if (word->type == WORD)
+        word->node->word->space = 1;
+    return word;
+};
+struct ast * mk_tree(char * label, bool is_value, bool nullary,
                      struct attributes * att, struct ast * child){
     struct ast * e = mk_node();
     e->type = TREE;
@@ -60,9 +68,9 @@ struct ast * mk_tree(char * label, bool is_value, bool nullary, bool space,
     e->node->tree->label = label;
     e->node->tree->is_value=is_value;
     e->node->tree->nullary=nullary;
-    e->node->tree->space=space;
+    //e->node->tree->space=space;
     e->node->tree->attributes=att;
-    e->node->tree->child=daughters;
+    e->node->tree->child=child;
     return e;
 }
 struct ast * mk_forest(bool is_value, struct ast * head, struct ast * tail){
@@ -106,5 +114,13 @@ struct ast * mk_declrec(char * id, struct ast * body){
     e->node->fun=malloc(sizeof(struct fun));
     e->node->fun->id = id;
     e->node->fun->body=body;
+    return e;
+}
+
+struct attributes * mk_attributes(char * key, char * value , struct attributes * next){
+    struct attributes *e = malloc(sizeof(struct attributes));
+    e->key = mk_word(key);
+    e->value = mk_word(value);
+    e->next = next;
     return e;
 }

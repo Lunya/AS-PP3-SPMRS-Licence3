@@ -1,7 +1,7 @@
 #include "node.h"
 #include "color_print.h"
 
-struct tree * createNode(char * label, bool nullary, bool space, enum type tp)
+/*struct tree * createNode(char * label, bool nullary, bool space, enum type tp)
 {
     struct tree * newNode = malloc(sizeof(struct tree));
     newNode->label = label;
@@ -185,13 +185,13 @@ void printNodeGraphRec(struct tree * node, FILE * fd, unsigned int nodeCounter)
                     <tr><td border=\"1\">%s</td></tr></table>>, shape=none];\n",
                     attributeCounter, iteratorAttribute->key, iteratorAttribute->value);
             /*fprintf(fd, "\t\"attribute%d\" -> \"attribute%d\" [color=\"#ff0088\", label=\"%s\"];\n",
-                attributeCounter, attributeCounter + 2, iteratorAttribute->value);*/
+                attributeCounter, attributeCounter + 2, iteratorAttribute->value);
             iteratorAttribute = iteratorAttribute->next;
             attributeCounter ++;
         }
     }
 
-   /* if (node->child != NULL)
+    if (node->child != NULL)
     {
         unsigned int precId = actualId;
         fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ff8800\", style=dotted];\n", actualId, nodeCounter++);
@@ -203,7 +203,7 @@ void printNodeGraphRec(struct tree * node, FILE * fd, unsigned int nodeCounter)
         printNodeGraphRec(node->child, fd, actualId);
     }
 
-    /*if (node->right != NULL)
+    if (node->right != NULL)
     {
         struct tree * iteratorNode = node->child;
         unsigned int precId = actualId;
@@ -219,7 +219,7 @@ void printNodeGraphRec(struct tree * node, FILE * fd, unsigned int nodeCounter)
             iteratorNode = iteratorNode->right;
         }
         while (iteratorNode!=NULL);
-    }*/
+    }
 }
 
 
@@ -229,7 +229,7 @@ void printNodeGraph(struct tree * node, char * out)
     FILE * fd = fopen(out, "w");
     fprintf(fd, "/*\n\
             Usage : dot -Tpng %s -o graph.png\n\
-            */\n\
+            \n\
             digraph G {\n\
                         \tsize=\"10,10\";\n\
                         \tedge [arrowhead=empty];\n",
@@ -263,3 +263,4 @@ void printNodeGraph(struct tree * node, char * out)
             fprintf(fd, "}");
     fclose(fd);
 }
+*/

@@ -26,22 +26,22 @@ struct tree {
     struct tree * right;       //frère droit
 };
 
-struct tree * createNode(char * label, bool nullary, bool space, enum type tp);
+//struct tree * createNode(char * label, bool nullary, bool space, enum type tp);
 
-struct attributes * createAttribute(char * key, char * value);
+//struct attributes * createAttribute(char * key, char * value);
 
-void addAttributeBrother(struct attributes * attr, struct attributes * brother);
+//void addAttributeBrother(struct attributes * attr, struct attributes * brother);
 
-void addAttribute(struct tree * node, struct attributes * attr);
+//void addAttribute(struct tree * node, struct attributes * attr);
 
-void addChild(struct tree * node, struct tree * child);
+//void addChild(struct tree * node, struct tree * child);
 
-void addBrother(struct tree * node, struct tree * brother);
+//void addBrother(struct tree * node, struct tree * brother);
 
-void addSpace(struct tree * node);
+//void addSpace(struct tree * node);
 
-void printNode(struct tree * node);
+//void printNode(struct tree * node);
 
-void printNodeGraph(struct tree * node, char * out);
+//void printNodeGraph(struct tree * node, char * out);
 
 #endif //_NODE_H

@@ -10,7 +10,7 @@
 */
 
 #include "analyseur.tab.h"
-#include "node.h"
+#include "ast.h"
 
 #include <stdio.h>
 
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 {
 	int retCode;
 	retCode = yyparse();
-	printNode(root);
-	printNodeGraph(root, argv[1]);
+    //printNode(root);
+    //printNodeGraph(root, argv[1]);
 	return retCode;
 }

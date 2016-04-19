@@ -1,7 +1,7 @@
 CFLAGS=-std=c99 -Wall
 CFLAGS2=-std=c99 -g -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes
 LDLIBS= -lfl -ly -lm
-INCLUDES=color_print.c node.c
+INCLUDES=color_print.c ast.c
 CC=gcc
 LEX=flex
 YACC=bison -d -v --graph
