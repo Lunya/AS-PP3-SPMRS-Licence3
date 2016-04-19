@@ -44,6 +44,21 @@ let[[:space:]]* {
 	return LET;
 }
 
+\-\>[[:space:]]* {
+	printfC(TEXT_CYAN, "%s", yytext);
+	return ARROW;
+}
+
+fun[[:space:]]* {
+	printfC(TEXT_CYAN, "%s", yytext);
+	return FUNT;
+}
+
+rec[[:space:]]* {
+	printfC(TEXT_CYAN, "%s", yytext);
+	return REC;
+}
+
 [[:space:]]in[[:space:]]* {
 	printfC(TEXT_CYAN, "%s", yytext);
 	return IN;	
