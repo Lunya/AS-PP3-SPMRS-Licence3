@@ -39,48 +39,55 @@ bool start_with_xml(char *, int);
 	return NUMBER;
 }
 
-
+let[[:space:]]* {
+	printfC(TEXT_CYAN, "%s", yytext);
+	return LET;
+}
+";" {
+	printfC(TEXT_RED, ";");
+	return ';';
+}
 
 "/"	{
 	printfC(TEXT_MAGENTA, "/");
-	return SLASH;
+	return '/';
 }
 
 "{"[[:space:]]*	{
 	printfC(TEXT_MAGENTA, "{");
-	return LEFT_BRACKET;
+	return '{';
 }
 
 [[:space:]]*"}"	{
 	printfC(TEXT_MAGENTA, "}");
-	return RIGHT_BRACKET;
+	return '}';
 }
 
 "["	{
 	printfC(TEXT_MAGENTA, "[");
 	BEGIN ATTRIBUTES;
-	 return LEFT_SQUARE_BRACKET;
+	 return '[';
 }
 
 <INITIAL,ATTRIBUTES>"]"	{
 	printfC(TEXT_MAGENTA, "]");
 	BEGIN INITIAL;
-	return RIGHT_SQUARE_BRACKET;
+	return ']';
 }
 
 "("	{
 	printfC(TEXT_MAGENTA, "(");
-	return LEFT_PARENTHESIS;
+	return '(';
 }
 
 ")"	{
 	printfC(TEXT_MAGENTA, ")");
-	return RIGHT_PARENTHESIS;
+	return ')';
 }
 
 <INITIAL,ATTRIBUTES>"="	{
 	printfC(TEXT_MAGENTA, "=");
-	return EQUAL;
+	return '=';
 }
 
 

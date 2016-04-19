@@ -26,16 +26,21 @@ void yyerror(const char*);
 	struct attributes * attribute;
 }
 
-%token LEFT_BRACKET RIGHT_BRACKET LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS EQUAL SLASH
+%token LET
 %token <number> NUMBER
 %token <text> STRING STRING_SPACES SPACES LABEL
 %type <node> tag tags string content
 %type <attribute> attribute
 %right STRING STRING_SPACES // verifier si pas %left
-//%left LEFT_BRACKET RIGHT_BRACKET LABEL
-%start tags
+%start decl
 %error-verbose
 %%
+decl:
+	LET LABEL '=' tag ';' decl {printf("TODO : Affect 'tag' to the variable 'label' \n");}
+	| LET LABEL SPACES '=' SPACES tag ';' SPACES decl {printf("TODO : Affect 'tag' to the variable 'label' \n");}
+	| tags {}
+	| %empty {}
+	;
 //Une forêt de balises
 tags:
 	tag tags
@@ -54,7 +59,7 @@ tags:
                 { $$ = NULL; }
 		root = $$;
 	}
-	| LEFT_BRACKET  tags  RIGHT_BRACKET
+	| '{'  tags  '}'
 	{
 
 		if ($2 != NULL)
@@ -63,7 +68,7 @@ tags:
 		{ $$ = NULL;}
 		root = $$;
 	}
-	| LEFT_BRACKET  tags  RIGHT_BRACKET tags
+	| '{'  tags  '}' tags
 	{
 
 		if ($2 != NULL)
@@ -84,24 +89,24 @@ tags:
 	;
 //Balise
 tag:
-	LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET LEFT_BRACKET content RIGHT_BRACKET
+	LABEL '[' attribute ']' '{' content '}'
 	{
                 $$ = mk_tree($1, false, false, $3, $6);
 	}
-	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SPACES LEFT_BRACKET content RIGHT_BRACKET
+	| LABEL '[' attribute ']' SPACES '{' content '}'
 	{
                 $$ = mk_tree($1, false, false, $3, $7);
 	}
-	| LABEL LEFT_SQUARE_BRACKET attribute RIGHT_SQUARE_BRACKET SLASH
+	| LABEL '[' attribute ']' '/'
 	{
                 $$ = mk_tree($1, false, true, $3, NULL);
 	} 
-	| LABEL LEFT_BRACKET content RIGHT_BRACKET
+	| LABEL '{' content '}'
         {
                 $$ = mk_tree($1, false, false, NULL, $3);
 	}
-	| LEFT_BRACKET RIGHT_BRACKET {$$ = NULL;}
-	| LABEL SLASH
+	| '{' '}' {$$ = NULL;}
+	| LABEL '/'
         {
                 $$ = mk_tree($1, false, true, NULL, NULL);
 	}
@@ -109,8 +114,8 @@ tag:
 
 //Un ensemble d'attributs
 attribute:
-        LABEL EQUAL string { $$ = mk_attributes($1, $3->node->forest->head->node->word->str, NULL); }
-        | LABEL EQUAL string attribute { $$ = mk_attributes($1, $3->node->forest->head->node->word->str, $4); }
+        LABEL '=' string { $$ = mk_attributes($1, $3->node->forest->head->node->word->str, NULL); }
+        | LABEL '=' string attribute { $$ = mk_attributes($1, $3->node->forest->head->node->word->str, $4); }
 	| SPACES { $$ = NULL; }
 	| SPACES attribute { $$ = $2; }
 	;
@@ -121,7 +126,9 @@ content:
         | tag content {  $$ = mk_forest(1, $1, $2); }
         | string   { mk_forest(1, $1, NULL); }
         | tag      { mk_forest(1, $1, NULL); }
-        | LEFT_BRACKET content RIGHT_BRACKET    { mk_forest(1, $2, NULL); }
+        | LABEL	   {printf("TODO : Get Tree from var name.\n");}
+        | LABEL	content   {printf("TODO : Get Tree from var name.\n");}
+        | '{' content '}'    { mk_forest(1, $2, NULL); }
         | SPACES content { mk_forest(1, $2, NULL); }
 	| SPACES { $$ = NULL; }
 	;
