@@ -43,6 +43,16 @@ let[[:space:]]* {
 	printfC(TEXT_CYAN, "%s", yytext);
 	return LET;
 }
+
+[[:space:]]in[[:space:]]* {
+	printfC(TEXT_CYAN, "%s", yytext);
+	return IN;	
+}
+
+[[:space:]]*where[[:space:]]* {
+	printfC(TEXT_CYAN, "%s", yytext);
+	return WHERE;
+}
 ";" {
 	printfC(TEXT_RED, ";");
 	return ';';

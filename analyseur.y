@@ -26,7 +26,7 @@ void yyerror(const char*);
 	struct attributes * attribute;
 }
 
-%token LET
+%token LET IN WHERE
 %token <number> NUMBER
 %token <text> STRING STRING_SPACES SPACES LABEL
 %type <node> tag tags string content
@@ -35,9 +35,14 @@ void yyerror(const char*);
 %start decl
 %error-verbose
 %%
+//TODO : Enlever tous ces token d'espaces
 decl:
-	LET LABEL '=' tag ';' decl {printf("TODO : Affect 'tag' to the variable 'label' \n");}
-	| LET LABEL SPACES '=' SPACES tag ';' SPACES decl {printf("TODO : Affect 'tag' to the variable 'label' \n");}
+	LET LABEL '=' tags ';' decl 				{printf("TODO : Affect 'tag' to the variable 'label' \n");}
+	| LET LABEL SPACES '=' SPACES tags ';' SPACES decl 	{printf("TODO : Affect 'tag' to the variable 'label' \n");}
+	| LET LABEL '=' tags IN tags ';' 			{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' \n");}
+	| LET LABEL SPACES '=' SPACES tags IN tags ';' 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' \n");}
+	| tags WHERE LABEL '=' tags ';'			{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' \n");}
+	| tags WHERE LABEL SPACES '=' SPACES tags ';' 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' \n");}
 	| tags {}
 	| %empty {}
 	;
