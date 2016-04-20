@@ -121,3 +121,5 @@ struct ast * mk_match(struct ast * ast, struct patterns * patterns);
 struct ast * mk_cond(struct ast * cond, struct ast * then_br, struct ast * else_br);
 struct ast * mk_declrec(char * id, struct ast * body);
 struct attributes * mk_attributes(char * key, char * value , struct attributes * next);
+
+void show_ast(const struct ast * tree, const char * file_name);
