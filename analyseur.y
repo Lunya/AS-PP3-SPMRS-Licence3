@@ -12,7 +12,66 @@
 #include "color_print.h"
 #include "ast.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+//Gestion des variables
+struct env {
+    struct ast * root;
+    char * var;
+    struct env * tail;
+  };
+struct env * environment = NULL;
+int push_var(char * var, struct ast * root) {
+    struct env * celltoFind =  NULL;
+    struct env * cell = environment;
+    while (cell != NULL){
+        if(!strcmp(var,cell->var)) {
+	    celltoFind = cell;
+	    cell = NULL;
+	}
+        else{
+	    cell=cell->tail;
+	}
+    }
+    if (celltoFind!=NULL) {
+        celltoFind->root = root;
+        return 0;
+    }
+    else {
+        struct env * cell = malloc(sizeof(struct env));
+        cell->var = var;
+        cell->root = root;
+        cell->tail = environment;
+        environment = cell;
+        return 1;
+    }
+}
+struct ast * search_var(char* var) {
+    struct env * cell = environment;
+    while (cell != NULL) {
+        if(!strcmp(var,cell->var)) {
+            return cell->root;
+        }
+        else {
+            cell=cell->tail;
+        }
+    }
+    printf("Variable %s non initialisé\n", var);
+    return NULL;
+}
+
+void free_all() {
+    struct env * currentCell = environment;
+    while (currentCell != NULL){
+        struct env * lastCell = currentCell;
+        currentCell=currentCell->tail;
+        free(lastCell->var);
+        free(lastCell);
+        environment = currentCell;
+    }
+}
+  
 struct ast * root = NULL;
 
 int yylex(void);
@@ -28,7 +87,7 @@ void yyerror(const char*);
 
 %token LET IN WHERE FUNT ARROW REC
 %token <number> NUMBER
-%token <text> STRING STRING_SPACES SPACES LABEL
+%token <text> STRING STRING_SPACES SPACES LABEL LABEL_LEFT_SQUARE_BRACKET LABEL_LEFT_BRACKET
 %type <node> tag tags string content
 %type <attribute> attribute
 %right STRING STRING_SPACES // verifier si pas %left
@@ -38,23 +97,19 @@ void yyerror(const char*);
 //TODO : Enlever tous ces token d'espaces
 decl:
 	LET LABEL '=' tags 				{printf("TODO : Affect 'tag' to the variable 'label' \n");}
-	| LET LABEL SPACES '=' SPACES tags 	{printf("TODO : Affect 'tag' to the variable 'label' \n");}
-	| LET LABEL '=' tags IN tags 			{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
-	| LET LABEL SPACES '=' SPACES tags IN tags 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
+	| LET LABEL '=' tags IN tags 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
 	| tags WHERE LABEL '=' tags 				{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
-	| tags WHERE LABEL SPACES '=' SPACES tags 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
-	| LET LABEL SPACES args SPACES '=' func {}
-	| LET LABEL SPACES '=' FUNT args ARROW func {}
-	| LET LABEL SPACES args SPACES '=' FUNT args ARROW func {}
-	| LET REC LABEL SPACES args SPACES '=' FUNT args ARROW func {}
+	| LET LABEL args '=' func {}
+	| LET LABEL '=' FUNT args ARROW func {}
+	| LET LABEL args '=' FUNT args ARROW func {}
+	| LET REC LABEL args '=' FUNT args ARROW func {}
 	| tags {}
-	| decl ';' SPACES decl
 	| decl ';' decl
 	| %empty
 	;
 
 args:
-	LABEL SPACES LABEL {}
+	LABEL LABEL {}
 	| LABEL {}
 	;
 //Pour l'instant, le contenu d'une fonction n'est pas traite, mais pour tout de 
@@ -101,33 +156,20 @@ tags:
                 { $$ = NULL; }
 		root = $$;
 	}
-	| SPACES tags
-	{
-                if ($2 != NULL)
-                { $$ = mk_forest(1, $2, NULL); }
-		else
-                { $$ = NULL; }
-		root = $$;
-	}
-	| SPACES { $$ = NULL; root = $$;}
 	;
 //Balise
 tag:
-	LABEL '[' attribute ']' '{' content '}'
+	LABEL_LEFT_SQUARE_BRACKET attribute ']' '{' content '}'
 	{
-                $$ = mk_tree($1, false, false, $3, $6);
+                $$ = mk_tree($1, false, false, $2, $5);
 	}
-	| LABEL '[' attribute ']' SPACES '{' content '}'
+	| LABEL_LEFT_SQUARE_BRACKET attribute ']' '/'
 	{
-                $$ = mk_tree($1, false, false, $3, $7);
-	}
-	| LABEL '[' attribute ']' '/'
-	{
-                $$ = mk_tree($1, false, true, $3, NULL);
+                $$ = mk_tree($1, false, true, $2, NULL);
 	} 
-	| LABEL '{' content '}'
+	| LABEL_LEFT_BRACKET content '}'
         {
-                $$ = mk_tree($1, false, false, NULL, $3);
+                $$ = mk_tree($1, false, false, NULL, $2);
 	}
 	| '{' '}' {$$ = NULL;}
 	| LABEL '/'
@@ -140,8 +182,6 @@ tag:
 attribute:
         LABEL '=' string { $$ = mk_attributes($1, $3->node->forest->head->node->word->str, NULL); }
         | LABEL '=' string attribute { $$ = mk_attributes($1, $3->node->forest->head->node->word->str, $4); }
-	| SPACES { $$ = NULL; }
-	| SPACES attribute { $$ = $2; }
 	;
 
 //Contenu d'une balise : Ensemble de textes, de balises ou de balises autofermantes.
@@ -153,8 +193,6 @@ content:
         | LABEL	   {printf("TODO : Get Tree from var name.\n");}
         | LABEL	content   {printf("TODO : Get Tree from var name.\n");}
         | '{' content '}'    { mk_forest(1, $2, NULL); }
-        | SPACES content { mk_forest(1, $2, NULL); }
-	| SPACES { $$ = NULL; }
 	;
 
 // Ensemble de mot

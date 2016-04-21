@@ -131,10 +131,36 @@ let[[:space:]]* {
 	}
 }
 
-[[:space:]]+ {
-	printfC(BACKGROUND_BLUE, "%s", yytext);
-	return SPACES;
+[[:alpha:]][[:alnum:]_'.]*\[|_[[:alnum:]_'.]+\[ {
+	if (start_with_xml(yytext, yyleng))
+	{
+		REJECT;
+	}
+	else
+	{
+		//TODO : Enlever le crochet
+		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+		strcpy(yylval.text, yytext);
+		printfC(TEXT_YELLOW, "%s", yytext);
+		return LABEL_LEFT_SQUARE_BRACKET;
+	}
 }
+
+[[:alpha:]][[:alnum:]_'.]*\{|_[[:alnum:]_'.]+\{ {
+	if (start_with_xml(yytext, yyleng))
+	{
+		REJECT;
+	}
+	else
+	{
+		//TODO : Enlever l'accolade
+		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+		strcpy(yylval.text, yytext);
+		printfC(TEXT_YELLOW, "%s", yytext);
+		return LABEL_LEFT_BRACKET;
+	}
+}
+
 
 \" {
 	printfC(TEXT_BLUE, "\"");
