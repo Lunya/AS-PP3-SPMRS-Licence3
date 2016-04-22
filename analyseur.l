@@ -138,9 +138,9 @@ let[[:space:]]* {
 	}
 	else
 	{
-		//TODO : Enlever le crochet
 		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-		strcpy(yylval.text, yytext);
+		//Enlever le crochet
+		memcpy(yylval.text, yytext, strlen(yytext) - 1);
 		printfC(TEXT_YELLOW, "%s", yytext);
 		return LABEL_LEFT_SQUARE_BRACKET;
 	}
@@ -153,9 +153,9 @@ let[[:space:]]* {
 	}
 	else
 	{
-		//TODO : Enlever l'accolade
 		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
-		strcpy(yylval.text, yytext);
+		//Enlever l'accolade
+		memcpy(yylval.text, yytext, strlen(yytext) - 1);
 		printfC(TEXT_YELLOW, "%s", yytext);
 		return LABEL_LEFT_BRACKET;
 	}

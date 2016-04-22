@@ -94,7 +94,6 @@ void yyerror(const char*);
 %start decl
 %error-verbose
 %%
-//TODO : Enlever tous ces token d'espaces
 decl:
 	LET LABEL '=' tags 				{printf("TODO : Affect 'tag' to the variable 'label' \n");}
 	| LET LABEL '=' tags IN tags 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
@@ -105,7 +104,7 @@ decl:
 	| LET REC LABEL args '=' FUNT args ARROW func {}
 	| tags {}
 	| decl ';' decl
-	| %empty
+	| decl ';'
 	;
 
 args:
