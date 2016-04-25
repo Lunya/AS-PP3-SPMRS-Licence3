@@ -82,11 +82,13 @@ void yyerror(const char*);
 	int number;
 	char * text;
         struct ast * node;
-	struct attributes * attribute;
+        struct attributes * attribute;
 }
 
 %token LET IN WHERE FUNT ARROW REC
 %token <number> NUMBER
+//%token PLUS MINUS MULT DIV LEQ LE GEQ GE EQ OR AND NOT
+//trouver un moyen de declarer ces variables dans bison sans erreur a la compilation
 %token <text> STRING STRING_SPACES SPACES LABEL LABEL_LEFT_SQUARE_BRACKET LABEL_LEFT_BRACKET
 %type <node> tag tags string content
 %type <attribute> attribute
@@ -94,14 +96,19 @@ void yyerror(const char*);
 %start decl
 %error-verbose
 %%
+
+//a modifier: declaration peut prendre soit une valeur numerique (fonction numerique possible) soit un arbre/foret
+//sujet indique que les declarations de variables et fonctions sont toujours avant les forets, a priori pas de melange possible
+//dclaration est forcement suivie d'un point virgule si il reste des elements a evaluer apres celle ci
+//-> declaration sans point virgule possible que en fin de fichier
 decl:
-	LET LABEL '=' tags 				{printf("TODO : Affect 'tag' to the variable 'label' \n");}
-	| LET LABEL '=' tags IN tags 		{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
-	| tags WHERE LABEL '=' tags 				{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
-	| LET LABEL args '=' func {}
-	| LET LABEL '=' FUNT args ARROW func {}
-	| LET LABEL args '=' FUNT args ARROW func {}
-	| LET REC LABEL args '=' FUNT args ARROW func {}
+        LET LABEL '=' tags 		{ push_var($2, $4); }
+        | LET LABEL '=' tags IN tags	{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
+        | tags WHERE LABEL '=' tags	{printf("TODO : Affect 'tag' locally to the variable 'LABEL' to the tags 'TAGS' [IN] \n");}
+        | LET LABEL args '=' func {}
+        | LET LABEL '=' FUNT args ARROW func {}
+        | LET LABEL args '=' FUNT args ARROW func {}
+        | LET REC LABEL args '=' FUNT args ARROW func {}
 	| tags {}
 	| decl ';' decl
 	| decl ';'
@@ -111,14 +118,30 @@ args:
 	LABEL LABEL {}
 	| LABEL {}
 	;
+
 //Pour l'instant, le contenu d'une fonction n'est pas traite, mais pour tout de 
-//même traite le reste dela grammaire, temporairement, je dis que le contenu 
+//même traite le reste de la grammaire, temporairement, je dis que le contenu
 //d'une fonction est 'fun'
+//fonction est soit une expression numerique, soit une operation de comparaison
 func:
 	FUNT {}
 	| %empty {}
-	;
-	
+        ;
+
+//operation numerique (stocker l'operation en tant que arbre de donnees, ne pas evaluer)
+numexp:
+        NUMBER                      {     }
+        //| numexp PLUS numexp        {     }
+        //| numexp MINUS numexp       {     }
+        //| numexp MULT numexp        {     }
+        //| numexp DIV numexp         {     }
+        //| '(' numexp ')'            {     }
+
+//comparaison LEQ, LE, GEQ, GE, EQ, OR, AND entre valeur numeriques | arbres | forets (tester les deux elements du meme type)
+//NOT renvoie le contraire de l'evaluation
+//compexp:
+
+
 //Une forêt de balises
 tags:
 	tag tags

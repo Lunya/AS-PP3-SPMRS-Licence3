@@ -20,7 +20,7 @@ enum ast_type {
     DECLREC   // Declarations recursives (let rec ... where rec ...)
 };
 
-enum binop{PLUS, MINUS, MULT, DIV, LEQ, LE, GEQ, GE, EQ, OR, AND};
+enum binop{ PLUS, MINUS, MULT, DIV, LEQ, LE, GEQ, GE, EQ, OR, AND };
 
 enum unaryop {NOT};
 
@@ -41,7 +41,6 @@ struct tree{
     char * label;
     bool is_value;
     bool nullary;
-    //bool space;
     struct attributes * attributes;
     struct ast * child;
 };
