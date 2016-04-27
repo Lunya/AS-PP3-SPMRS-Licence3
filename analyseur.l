@@ -39,6 +39,21 @@ bool start_with_xml(char *, int);
 	return NUMBER;
 }
 
+\, {
+	return ',';
+}
+if {
+	return IF;
+}
+
+then {
+	return THEN;
+}
+
+else {
+	return ELSE;
+}
+
 let[[:space:]]* {
 	printfC(TEXT_CYAN, "%s", yytext);
 	return LET;
