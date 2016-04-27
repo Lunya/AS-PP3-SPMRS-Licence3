@@ -1,16 +1,16 @@
 CFLAGS=-std=c99 -Wall
 CFLAGS2=-std=c99 -g -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes
 LDLIBS= -lfl -ly -lm
-INCLUDES=color_print.c ast.c
+INCLUDES=color_print.c ast.c variables.c
 CC=gcc
 LEX=flex
 YACC=bison -d -v --graph
 OUT=spmrs
 TESTS_SOURCES=$(wildcard tests/*.jhtml)
 
-spmrs: main.c analyseur.tab.c lex.yy.c
-	$(CC) $(CFLAGS) -o $(OUT) $(INCLUDES) $^ $(LDLIBS)
 
+$(OUT): $(INCLUDES) main.c analyseur.tab.c lex.yy.c
+	$(CC) $(CFLAGS) -o $(OUT) $^ $(LDLIBS)
 
 
 debug: main.c analyseur.tab.c lex.yy.c

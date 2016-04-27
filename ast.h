@@ -1,3 +1,6 @@
+#ifndef AST_H
+#define AST_H
+
 #include <stdbool.h>
 #include "chemin.h"
 #include "pattern.h"
@@ -88,6 +91,7 @@ union node{
     int num;
     enum binop binop;
     enum unaryop unaryop;
+    char * var;
     struct word * word;  // peut representer ou bien une variable ou encore un mot
     struct path * chemin;
     struct app * app;
@@ -122,3 +126,5 @@ struct ast * mk_declrec(char * id, struct ast * body);
 struct attributes * mk_attributes(char * key, char * value , struct attributes * next);
 
 void show_ast(const struct ast * tree, const char * file_name);
+
+#endif // AST_H

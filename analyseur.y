@@ -11,6 +11,7 @@
 */
 #include "color_print.h"
 #include "ast.h"
+#include "variables.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
