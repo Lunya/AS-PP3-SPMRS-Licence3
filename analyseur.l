@@ -39,6 +39,16 @@ bool start_with_xml(char *, int);
 	return NUMBER;
 }
 
+\< { return '<';}
+
+\> { return '>';}
+
+\<\= { return bLEQ;}
+
+\>\= { return bGEQ;}
+
+\=\= { return bEQ;}
+
 \, {
 	return ',';
 }
@@ -129,7 +139,6 @@ let[[:space:]]* {
 	printfC(TEXT_MAGENTA, "=");
 	return '=';
 }
-
 
 
 <INITIAL,ATTRIBUTES>[[:alpha:]][[:alnum:]_'.]*|_[[:alnum:]_'.]+ {
