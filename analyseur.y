@@ -41,9 +41,9 @@ void yyerror(const char*);
 %left ';'
 %token LET IN WHERE FUNT ARROW REC IF THEN ELSE
 %token <number> NUMBER
-%token bLEQ bLE bGEQ bGE bEQ bOR bAND bNOT
+%token bLEQ bLE bGEQ bGE bEQ bOR bAND bNOT bEMIT bNEQ
 %token <text> STRING STRING_SPACES SPACES LABEL LABEL_LEFT_SQUARE_BRACKET LABEL_LEFT_BRACKET
-%type <node> tag tags string content numexp exprtag ite cond decl
+%type <node> tag tags string content numexp exprtag ite cond decl args decls file conds
 %type <attribute> attribute
 %right STRING STRING_SPACES // verifier si pas %left
 %start file
@@ -52,30 +52,36 @@ void yyerror(const char*);
 
 file:
     decls tags
-    {}
+    {
+        mk_forest( false, $1, $2);
+    }
     | decls
-    {}
+    {
+        $$ = $1;
+    }
     | tags
-    {}
+    {
+        $$ = $1;
+    }
     | %empty
-    {}
+    {
+        $$ = NULL;
+    }
     ;
 
 decls: 
     decl ';' decls
     {
-        
+        mk_forest( false, $1, $3 );
     }
-    //| decl where ';'
     | decl ';'
     {
-        
+        $$ = $1;
     }
     ;
 
 decl:
-    //LET LABEL '=' val
-    LET LABEL '=' tag
+    LET LABEL '=' tags
     {
         mk_fun( $2, $4 );
     }
@@ -83,105 +89,140 @@ decl:
     {
         $$ = mk_fun( $2, $4 );
     }
-    //| LET LABEL '=' LABEL
-    | LET LABEL '=' exprtag
+    | LET LABEL args '=' tags
     {
-        $$ = mk_fun( $2, $4 );
+        struct ast * iterator = $3;
+        while (iterator->node->fun->body != NULL){
+            iterator = iterator->node->fun->body;
+        }
+        iterator->node->fun->body = $5;
+        $$ = mk_fun($2, $5);
     }
-    | LET LABEL args '=' func
+    | LET LABEL '=' FUNT args ARROW tags
     {
-        
+        struct ast * iterator = $5;
+        while (iterator->node->fun->body != NULL){
+            iterator = iterator->node->fun->body;
+        }
+        iterator->node->fun->body = $5;
+        $$ = mk_fun($2, $5);
     }
-    | LET LABEL '=' FUNT args ARROW func
+    | LET LABEL args '=' FUNT args ARROW tags
     {
-        
+        //On prend la première liste d'arguments
+        struct ast * iterator = $3;
+        while (iterator->node->fun->body != NULL){
+            iterator = iterator->node->fun->body;
+        }
+        //On concatène la deuxième liste
+        iterator->node->fun->body = $6;
+        //On ajoute la le body à la fin
+        while (iterator->node->fun->body != NULL){
+            iterator = iterator->node->fun->body;
+        }
+        iterator->node->fun->body = $8;
+        $$ = mk_fun($2, $3);
     }
-    | LET LABEL args '=' FUNT args ARROW func
+    | LET REC LABEL args '=' FUNT args ARROW tags
     {
-        
-    }
-    | LET REC LABEL args '=' FUNT args ARROW func
-    {
-        
+        //On prend la première liste d'arguments
+        struct ast * iterator = $4;
+        while (iterator->node->fun->body != NULL){
+            iterator = iterator->node->fun->body;
+        }
+        //On concatène la deuxième liste
+        iterator->node->fun->body = $7;
+        //On ajoute la le body à la fin
+        while (iterator->node->fun->body != NULL){
+            iterator = iterator->node->fun->body;
+        }
+        iterator->node->fun->body = $9;
+        $$ = mk_fun($3, $4);
     }
 	;
-	
-
-/*
-where:
-    WHERE LABEL '=' tag
-    {}
-    | WHERE LABEL '=' numexp
-    {}
-    | WHERE LABEL args '=' func
-    {}
-    | WHERE LABEL '=' FUNT args ARROW func
-    {}
-    | WHERE LABEL args '=' FUNT args ARROW func
-    {}
-    | WHERE REC LABEL args '=' FUNT args ARROW func
-*/
-    
-//val:
-//    tag
-//    | numexp
-//    | ite
-//    | LABEL
-    //| funapp
-
 
 args:
-	args LABEL
-	{}
+	LABEL args
+	{
+	    $$ = mk_fun( $1, $2 );
+	}
 	| LABEL
-	{}
+	{
+	    $$ = mk_fun( $1, NULL );
+	}
 	;
 	
 //L’expression e qui sert à choisir la branche de la conditionnelle à exécuter 
 //devra s’évaluer ou bien en un entier ou alors en un arbre. Si l’entier est 
 //différent de 0 ou si l’arbre est non vide, alors la branche « then » sera 
 //exécutée, sinon ce sera la branche « else ».
-cond:
-    NUMBER 
+conds:
+    cond bOR conds
     {
-        $$ = mk_integer( $1 );
+        $$ = mk_app(
+            mk_app( mk_binop( OR ), $1 ), $3
+            );
+    }
+    | cond bAND conds
+    {
+        $$ = mk_app(
+            mk_app( mk_binop( AND ), $1 ), $3
+            );
+    }
+    | cond
+    {
+        $$ = $1;
+    }
+    | '!' conds
+    {
+        $$ = mk_app( mk_unaryop( NOT ), $2 );
+    }    
+;
+
+
+cond:
+    numexp 
+    {
+        $$ = $1;
     }
     | tags
     {
         $$ = $1;
     }
-    | LABEL
-    {
-        $$ = mk_var( $1 );
-    }
-    | NUMBER '>' NUMBER
+    | numexp '>' numexp
     {
         $$ = mk_app(
-            mk_app( mk_binop( GE ), mk_integer( $1 ) ), mk_integer( $3 )
+            mk_app( mk_binop( GE ), $1 ), $3
             );
     }
-    | NUMBER '<' NUMBER
+    | numexp '<' numexp
     {
         $$ = mk_app(
-            mk_app( mk_binop( LE ), mk_integer( $1 ) ), mk_integer( $3 )
+            mk_app( mk_binop( LE ), $1 ), $3
             );
     }
-    | NUMBER bGEQ NUMBER
+    | numexp bGEQ numexp
     {
         $$ = mk_app(
-            mk_app( mk_binop( GEQ ), mk_integer( $1 ) ), mk_integer( $3 )
+            mk_app( mk_binop( GEQ ), $1 ), $3
             );
     }
-    | NUMBER bLEQ NUMBER
+    | numexp bLEQ numexp
     {
         $$ = mk_app(
-            mk_app( mk_binop( LEQ ), mk_integer( $1 ) ), mk_integer( $3 )
+            mk_app( mk_binop( LEQ ), $1 ), $3
             );
     }
-    | NUMBER bEQ NUMBER
+    | numexp bEQ numexp
     {
         $$ = mk_app(
-            mk_app( mk_binop( EQ ), mk_integer( $1 ) ), mk_integer( $3 )
+            mk_app( mk_binop( EQ ), $1 ), $3
+            );
+    }
+    | numexp bNEQ numexp
+    {
+        $$ = mk_app(
+            mk_app( mk_binop( NEQ ), $1 ), $3
             );
     }
     | tags '>' tags
@@ -214,22 +255,28 @@ cond:
             mk_app( mk_binop( EQ ), $1 ), $3
             );
     }
+    | tags bNEQ tags
+    {
+        $$ = mk_app(
+            mk_app( mk_binop( NEQ ), $1 ), $3
+            );
+    }
 ;
 
 ite:
-    IF cond THEN exprtag ELSE exprtag 
+    IF conds THEN exprtag ELSE exprtag 
     {
         $$ = mk_cond( $2, $4, $6 );
     }
-    | IF cond THEN tag ELSE exprtag 
+    | IF conds THEN tag ELSE exprtag 
     {
         $$ = mk_cond( $2, $4, $6 );
     }
-    | IF cond THEN exprtag ELSE tag 
+    | IF conds THEN exprtag ELSE tag 
     {
         $$ = mk_cond( $2, $4, $6 );
     }
-    | IF cond THEN tag ELSE tag 
+    | IF conds THEN tag ELSE tag 
     {
         $$ = mk_cond( $2, $4, $6 );
     }
@@ -237,17 +284,6 @@ ite:
     {
         $$ = $2;
     }
-    ;
-
-//Pour l'instant, le contenu d'une fonction n'est pas traite, mais pour tout de 
-//même traite le reste de la grammaire, temporairement, je dis que le contenu
-//d'une fonction est 'fun'
-//fonction est soit une expression numerique, soit une operation de comparaison
-func:
-	FUNT
-	{}
-	| %empty
-	{}
     ;
 
 //operation numerique (stocker l'operation en tant que arbre de donnees, ne pas evaluer)
@@ -338,25 +374,7 @@ tags:
 	
 //Si quelqu'un a un moyen pour limiter les règles
 exprtag:
-    LET LABEL '=' tag IN tag
-    {
-        $$ = mk_app( 
-            mk_fun( $2, $6 ), $4
-            );
-    }
-    | LET LABEL '=' exprtag IN tag
-    {
-        $$ = mk_app( 
-            mk_fun( $2, $6 ), $4
-            );
-    }
-    | LET LABEL '=' tag IN exprtag
-    {
-        $$ = mk_app( 
-            mk_fun( $2, $6 ), $4
-            );
-    }
-    | LET LABEL '=' exprtag IN exprtag
+    LET LABEL '=' tags IN tags
     {
         $$ = mk_app( 
             mk_fun( $2, $6 ), $4
@@ -376,7 +394,16 @@ exprtag:
 	{
 	    mk_var( $1 );
 	}
-	;
+
+/*
+match:
+    MATCH tag WITH filters END;
+
+filters:    
+    
+filter:
+*/
+
 
 //Balise
 tag:
@@ -432,7 +459,7 @@ content:
     {
         mk_forest( 1, $1, NULL );
     }
-    | exprtag ','
+    | exprtag
     {
         mk_forest( 1, $1, NULL);
     }

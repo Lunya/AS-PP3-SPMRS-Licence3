@@ -32,7 +32,6 @@ bool start_with_xml(char *, int);
 
 %%
 
-	
 [[:digit:]]+ {
 	printfC(TEXT_LIGHT_GRAY, "%s", yytext);
 	yylval.number = atoi(yytext);
@@ -43,11 +42,17 @@ bool start_with_xml(char *, int);
 
 \> { return '>';}
 
-\<\= { return bLEQ;}
+\<\= { return bLEQ; }
 
-\>\= { return bGEQ;}
+\>\= { return bGEQ; }
 
-\=\= { return bEQ;}
+\=\= { return bEQ; }
+
+\!\= { return bNEQ; }
+
+or { return bOR; }
+
+and { return bAND; }
 
 \, {
 	return ',';
@@ -67,6 +72,10 @@ else {
 let[[:space:]]* {
 	printfC(TEXT_CYAN, "%s", yytext);
 	return LET;
+}
+
+emit {
+	return bEMIT;
 }
 
 [[:space:]]*\-\>[[:space:]]* {
