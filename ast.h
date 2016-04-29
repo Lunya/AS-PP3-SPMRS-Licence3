@@ -117,7 +117,7 @@ struct ast * mk_cond(struct ast * cond, struct ast * then_br, struct ast * else_
 struct ast * mk_declrec(char * id, struct ast * body);
 
 struct attributes * mk_attributes(char * key, char * value , struct attributes * next);
-//struct ast * add_space(struct ast * word);
+struct ast * add_space(struct ast * word);
 struct ast * mk_forest(bool is_value, struct ast * head, struct ast * tail);
 
 void show_ast(const struct ast * tree, const char * file_name);

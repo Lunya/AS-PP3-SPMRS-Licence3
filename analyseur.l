@@ -28,7 +28,7 @@ bool start_with_xml(char *, int);
 
 %option noinput nounput
 
-%x STRINGS ATTRIBUTES STRINGS_ATTRIBUTES
+%x STRINGS ATTRIBUTES STRINGS_ATTRIBUTES EMIT EMIT_STRING
 
 %%
 
@@ -75,7 +75,23 @@ let[[:space:]]* {
 }
 
 emit {
+	BEGIN EMIT;
 	return bEMIT;
+}
+
+<EMIT>\" {
+	BEGIN EMIT_STRING;
+}
+
+<EMIT_STRING>\" {
+	BEGIN INITIAL;
+}
+
+<EMIT_STRING>[^\"]* {
+	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
+	strcpy(yylval.text, yytext);
+	printfC( TEXT_LIGHT_BLUE, "%s", yytext );
+	return STRING;
 }
 
 [[:space:]]*\-\>[[:space:]]* {
@@ -175,6 +191,7 @@ emit {
 		//Enlever le crochet
 		memcpy(yylval.text, yytext, strlen(yytext) - 1);
 		printfC(TEXT_YELLOW, "%s", yytext);
+		BEGIN ATTRIBUTES;
 		return LABEL_LEFT_SQUARE_BRACKET;
 	}
 }
@@ -229,7 +246,7 @@ emit {
 <STRINGS_ATTRIBUTES>[^\"]* {
 	yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
 	strcpy(yylval.text, yytext);
-	printfC(TEXT_GREEN, "%s", yytext);
+	printfC(TEXT_LIGHT_GRAY, "%s", yytext);
 	return STRING;
 }
 

@@ -1,7 +1,7 @@
 CFLAGS=-std=c99 -Wall
 CFLAGS2=-std=c99 -g -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes
 LDLIBS= -lfl -ly -lm
-INCLUDES=color_print.c ast.c variables.c pattern.c import.c machine.c
+INCLUDES=color_print.c ast.c variables.c pattern.c import.c machine.c pattern_matching.c
 CC=gcc
 LEX=flex
 YACC=bison -d -v --graph
@@ -32,13 +32,23 @@ test: $(OUT) analyseur.input
 check: all
 	for i in $(TESTS_SOURCES); do \
 		echo -e "\033[1;30;46mtest of: $$i\033[0m"; \
-		if ./$(OUT) $(addsuffix .jhtml, $$i) $$i.dot $$? -eq 0; then \
+		if ./$(OUT) $(addsuffix .jhtml, $$i) $(addsuffix .dot, $$i) $$? -eq 0; then \
 			echo -e "\033[42mtest OK\033[0m"; \
 		else \
 			echo -e "\033[41mtest NOT really OK\033[0m"; \
 		fi; \
 		dot -Tsvg $(addsuffix .dot, $$i) -o $(addsuffix .svg, $$i); \
 		rm $(addsuffix .dot, $$i); \
+	done
+
+check_emit: check
+	for i in $(TESTS_SOURCES); do \
+		echo -e "\033[1;30;46mtest of: $$i.html\033[0m"; \
+		if cmp $(addsuffix .html, $$i) $(addsuffix _expected.html, $$i) $$? -eq 0; then \
+			echo -e "\033[42mgenerated file is good\033[0m"; \
+		else \
+			echo -e "\033[41msomething xent xrong in generated file\033[0m"; \
+		fi; \
 	done
 
 errorcheck: all
@@ -52,4 +62,4 @@ errorcheck: all
 	done
 
 clean:
-	rm analyseur.output lex.yy.c analyseur.tab.c analyseur.tab.h tests/*.dot tests/*.svg
+	rm analyseur.output lex.yy.c analyseur.tab.c analyseur.tab.h tests/*.svg

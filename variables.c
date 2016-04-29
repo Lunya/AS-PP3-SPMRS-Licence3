@@ -135,3 +135,12 @@ struct ast * vars_get( struct vars * v, char * name)
     }
     return value;
 }
+
+unsigned int vars_get_level( struct vars * v )
+{
+    struct vars * iterator = v;
+    unsigned int level = 0;
+    while ((iterator = iterator->next) != NULL)
+        level ++;
+    return level;
+}

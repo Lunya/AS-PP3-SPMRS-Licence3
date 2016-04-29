@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include "ast.h"
 #include "import.h"
@@ -119,14 +120,21 @@ struct attributes * mk_attributes(char * key, char * value , struct attributes *
 	e->next = next;
 	return e;
 }
-/*
+
 struct ast * add_space(struct ast * word){
 	if (word->type == WORD)
-		word->node->word->space = 1;
+	{
+	    int str_len = strlen( word->node->str );
+	    char * new_str = malloc( str_len + 2 );
+	    strcpy( new_str, word->node->str );
+	    new_str[str_len] = ' ';
+	    new_str[str_len + 1] = '\0';
+	    word->node->str = new_str;
+	}
 	return word;
-}*/
+}
 
-
+int iterations;
 void show_ast_rec(FILE *, const struct ast *, unsigned int, unsigned int *, unsigned int *);
 void show_ast(const struct ast * tree, const char * file_name)
 {
@@ -165,6 +173,7 @@ digraph G {\n\
 	fprintf(fd, "\t\"node0\" [shape=none, label=\"\"]\n");
 	unsigned int id = 1;
 	unsigned int attr = 1;
+	iterations = 0;
 	show_ast_rec(fd, tree, 0, &id, &attr);
 	fprintf(fd, "}\n");
 	fclose(fd);
@@ -172,159 +181,285 @@ digraph G {\n\
 
 void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsigned int * id, unsigned int * attr)
 {
-	unsigned int actual_node = *id;
-	unsigned int actual_attributes = *attr;
-	if (tree != NULL)
-	{
-		switch (tree->type)
-		{
-			case INTEGER:
-			{
-				break;
-			}
-			case BINOP:
-			{
-				break;
-			}
-			case UNARYOP:
-			{
-				break;
-			}
-			case VAR:
-			{
-				break;
-			}
-			case IMPORT:
-			{
-				break;
-			}
-			case APP:
-			{
-				break;
-			}
-			case WORD:
-			{
-				char * w = tree->node->str;
-				fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
-					<tr><td border=\"1\"><font color=\"#880000\">Type: WORD</font></td></tr>\
-					<tr><td border=\"1\"><font color=\"#0000ff\">String: %s</font></td></tr>\
-					</table>>];\n",
-					actual_node,
-					w
-				);
-
-				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ff0000\"];\n",
-					parent,
-					actual_node
-				);
-				break;
-			}
-			case TREE:
-			{
-				struct tree * t = tree->node->tree;
-				fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
-					<tr><td border=\"1\"><font color=\"#880000\">Type: TREE</font></td></tr>\
-					<tr><td border=\"1\"><font color=\"#0000ff\">Label: %s</font></td></tr>\
-					<tr><td border=\"1\"><font color=\"#880088\">Is value: %s</font></td></tr>\
-					<tr><td border=\"1\"><font color=\"#880088\">Nullary: %s</font></td></tr>\
-					</table>>];\n",
-					actual_node,
-					t->label,
-					t->is_value ? "Yes" : "No",
-					t->nullary ? "Yes" : "No"
-				);
-
-				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ff8800\"];\n",
-					parent,
-					actual_node
-				);
-				
-				struct attributes * iterator_attr = t->attributes;
-				while (iterator_attr != NULL)
-				{
-					fprintf(fd, "\t\"attribute%d\" [label=<<table border=\"0\" cellspacing=\"0\">\
-						<tr><td border=\"1\"><font color=\"#008800\">%s</font></td></tr>\
-						<tr><td border=\"1\">%s</td></tr></table>>, shape=none];\n",
-						*attr,
-						iterator_attr->key->node->str,
-						iterator_attr->value->node->str
-					);
-					if (actual_attributes == *attr) {
-						fprintf(fd, "\t\"node%d\" -> \"attribute%d\" [color=\"#0088ff\"];\n",
-							actual_node,
-							*attr
-						);
-					} else {
-						fprintf(fd, "\t\"attribute%d\" -> \"attribute%d\" [color=\"#0088ff\"];\n",
-							(*attr) - 1,
-							*attr
-						);
-					}
-					fprintf(fd, "\t\"node%d\" -> \"attribute%d\" [color=\"#0088ff\", style=dotted];\n",
-						actual_node,
-						*attr
-					);
-					(*attr) ++;
-					iterator_attr = iterator_attr->next;
-				}
-				(*id) ++;
-				show_ast_rec(fd, t->child, actual_node, id, attr);
-				break;
-			}
-			case FOREST:
-			{
-				struct forest * f = tree->node->forest;
-				fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
-					<tr><td border=\"1\"><font color=\"#880000\">Type: FOREST</font></td></tr>\
-					<tr><td border=\"1\"><font color=\"#880088\">Is value: %s</font></td></tr>\
-					</table>>];\n",
-					actual_node,
-					f->is_value ? "Yes" : "No"
-				);
-
-				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ff8800\"];\n",
-					parent,
-					actual_node
-				);
-
-				(*id) ++;
-				show_ast_rec(fd, f->head, actual_node, id, attr);
-				show_ast_rec(fd, f->tail, actual_node, id, attr);
-				break;
-			}
-			case FUN:
-			{
-				break;
-			}
-			case MATCH:
-			{
-				break;
-			}
-			case COND:
-			{
-				break;
-			}
-			case DECLREC:
-			{
-				break;
-			}
-			default:
-				printf("unknown tree type %d\n", tree->type);
-		}
-	}
+    if (iterations < 1000)
+    {
+        iterations ++;
+    	unsigned int actual_node = *id;
+    	unsigned int actual_attributes = *attr;
+    	if (tree != NULL)
+    	{
+    		switch (tree->type)
+    		{
+    			case INTEGER:
+    			{
+    				fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: INTEGER</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#880000\">num: %d</font></td></tr>\
+    					</table>>];\n",
+    					actual_node,
+    					tree->node->num
+    				);
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ffff00\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				break;
+    			}
+    			case BINOP:
+    			{
+    			    char * text;
+    			    switch (tree->node->binop)
+    			    {
+                        case PLUS: text = "PLUS"; break;
+                        case MINUS: text = "MINUS"; break;
+                        case MULT: text = "MUL"; break;
+                        case DIV: text = "DIV"; break;
+                        case LEQ: text = "LEQ"; break;
+                        case LE: text = "LE"; break;
+                        case GEQ: text = "GEQ"; break;
+                        case GE: text = "GE"; break;
+                        case EQ: text = "EQ"; break;
+                        case NEQ: text = "NEQ"; break;
+                        case OR: text = "OR"; break;
+                        case AND: text = "AND"; break;
+                        case EMIT: text = "EMIT"; break;
+                        default: text = "bad value";
+    			    }
+    			    fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: BINOP</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#880000\">value: %s</font></td></tr>\
+    					</table>>];\n",
+    					actual_node,
+    					text
+    				);
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ffff00\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				break;
+    			}
+    			case UNARYOP:
+    			{
+    			    char * text;
+    			    switch (tree->node->unaryop)
+    			    {
+                        case NOT: text = "NOT"; break;
+                        case NEG: text = "NEG"; break;
+                        default: text = "bad value";
+    			    }
+    			    fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: UNARYOP</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#880000\">value: %s</font></td></tr>\
+    					</table>>];\n",
+    					actual_node,
+    					text
+    				);
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ffff00\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				break;
+    			}
+    			case VAR:
+    			{
+    				fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: VAR</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#880000\">str: %s</font></td></tr>\
+    					</table>>];\n",
+    					actual_node,
+    					tree->node->str
+    				);
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ffff00\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				break;
+    			}
+    			case IMPORT:
+    			{
+    				break;
+    			}
+    			case APP:
+    			{
+    				struct app * a = tree->node->app;
+    				fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: APP</font></td></tr>\
+    					</table>>];\n",
+    					actual_node
+    				);
+    				
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ff8800\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				
+    				(*id) ++;
+    				show_ast_rec(fd, a->fun, actual_node, id, attr);
+    				(*id) ++;
+    				show_ast_rec(fd, a->arg, actual_node, id, attr);
+    				break;
+    			}
+    			case WORD:
+    			{
+    				char * w = tree->node->str;
+    				fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: WORD</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#0000ff\">String: %s</font></td></tr>\
+    					</table>>];\n",
+    					actual_node,
+    					w
+    				);
+    
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#00ff00\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				break;
+    			}
+    			case TREE:
+    			{
+    				struct tree * t = tree->node->tree;
+    				fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: TREE</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#0000ff\">Label: %s</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#880088\">Is value: %s</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#880088\">Nullary: %s</font></td></tr>\
+    					</table>>];\n",
+    					actual_node,
+    					t->label,
+    					t->is_value ? "Yes" : "No",
+    					t->nullary ? "Yes" : "No"
+    				);
+    
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ff8800\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				
+    				struct attributes * iterator_attr = t->attributes;
+    				while (iterator_attr != NULL)
+    				{
+    					fprintf(fd, "\t\"attribute%d\" [label=<<table border=\"0\" cellspacing=\"0\">\
+    						<tr><td border=\"1\"><font color=\"#008800\">%s</font></td></tr>\
+    						<tr><td border=\"1\">%s</td></tr></table>>, shape=none];\n",
+    						*attr,
+    						iterator_attr->key->node->str,
+    						iterator_attr->value->node->str
+    					);
+    					if (actual_attributes == *attr) {
+    						fprintf(fd, "\t\"node%d\" -> \"attribute%d\" [color=\"#0088ff\"];\n",
+    							actual_node,
+    							*attr
+    						);
+    					} else {
+    						fprintf(fd, "\t\"attribute%d\" -> \"attribute%d\" [color=\"#0088ff\"];\n",
+    							(*attr) - 1,
+    							*attr
+    						);
+    					}
+    					fprintf(fd, "\t\"node%d\" -> \"attribute%d\" [color=\"#0088ff\", style=dotted];\n",
+    						actual_node,
+    						*attr
+    					);
+    					(*attr) ++;
+    					iterator_attr = iterator_attr->next;
+    				}
+    				(*id) ++;
+    				show_ast_rec(fd, t->child, actual_node, id, attr);
+    				break;
+    			}
+    			case FOREST:
+    			{
+    				struct forest * f = tree->node->forest;
+    				fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: FOREST</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#880088\">Is value: %s</font></td></tr>\
+    					</table>>];\n",
+    					actual_node,
+    					f->is_value ? "Yes" : "No"
+    				);
+    
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ff8800\"];\n",
+    					parent,
+    					actual_node
+    				);
+    
+    				(*id) ++;
+    				show_ast_rec(fd, f->head, actual_node, id, attr);
+    				(*id) ++;
+    				show_ast_rec(fd, f->tail, actual_node, id, attr);
+    				break;
+    			}
+    			case FUN:
+    			{
+    				struct fun * f = tree->node->fun;
+    				fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: FUN</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#880088\">id: %s</font></td></tr>\
+    					</table>>];\n",
+    					actual_node,
+    					f->id
+    				);
+    				
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ff8800\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				
+    				(*id) ++;
+    				show_ast_rec(fd, f->body, actual_node, id, attr);
+    				break;
+    			}
+    			case MATCH:
+    			{
+    				break;
+    			}
+    			case COND:
+    			{
+    			    struct cond * c = tree->node->cond;
+    			    
+    			    fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: COND</font></td></tr>\
+    					</table>>];\n",
+    					actual_node
+    				);
+    				
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ff8800\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				
+    				(*id) ++;
+    				show_ast_rec(fd, c->cond, actual_node, id, attr);
+    				(*id) ++;
+    				show_ast_rec(fd, c->then_br, actual_node, id, attr);
+    				(*id) ++;
+    				show_ast_rec(fd, c->else_br, actual_node, id, attr);
+    				break;
+    			}
+    			case DECLREC:
+    			{
+    				break;
+    			}
+    			default:
+    				printf("unknown tree type %d\n", tree->type);
+    		}
+    	}
+    }
 }
 
 
-void generate_html_rec(FILE *, const struct ast *, unsigned int);
+void generate_html_rec(FILE *, const struct ast *, unsigned int, bool *);
 void generate_html(const struct ast * tree, const char * file_name)
 {
 	FILE * fd = fopen(file_name, "w");
 	fprintf(fd, "<!DOCTYPE HTML>\n");
-	generate_html_rec(fd, tree, 0);
+	bool prev_text = false;
+	generate_html_rec(fd, tree, 0, &prev_text);
 	fclose(fd);
 }
 
-void generate_html_rec(FILE * fd, const struct ast * tree, unsigned int level)
+void generate_html_rec(FILE * fd, const struct ast * tree, unsigned int level, bool * prev_node_is_text)
 {
 	if (tree != NULL)
 	{
@@ -348,6 +483,7 @@ void generate_html_rec(FILE * fd, const struct ast * tree, unsigned int level)
 			}
 			case VAR:
 			{
+			    fprintf(stderr, "%s", tree->node->str );
 				break;
 			}
 			case IMPORT:
@@ -361,18 +497,23 @@ void generate_html_rec(FILE * fd, const struct ast * tree, unsigned int level)
 			case WORD:
 			{
 				fprintf( fd, "%s", tree->node->str );
+				*prev_node_is_text = true;
 				break;
 			}
 			case TREE:
 			{
 				struct tree * t = tree->node->tree;
+				*prev_node_is_text = false;
+				if ( *prev_node_is_text )
+				    fprintf( fd, "%s", indent );
 				if ( t->nullary )
 				{
-					fprintf( fd, "%s<%s />", indent, t->label );
+					fprintf( fd, "%s<%s />\n", indent, t->label );
 				}
 				else
 				{
 					struct attributes * iterator_attr = t->attributes;
+					fprintf( fd, "%s<%s", indent, t->label );
 					while (iterator_attr != NULL)
 					{
 						fprintf( fd,
@@ -383,16 +524,17 @@ void generate_html_rec(FILE * fd, const struct ast * tree, unsigned int level)
 						iterator_attr = iterator_attr->next;
 					}
 					fprintf( fd, ">\n" );
-					generate_html_rec( fd, t->child, level + 1 );
-					fprintf( fd, "%s</%s>", indent, t->label );
+					fprintf( fd, "%s", indent );
+					generate_html_rec( fd, t->child, level + 1, prev_node_is_text );
+					fprintf( fd, "%s</%s>\n", indent, t->label );
 				}
 				break;
 			}
 			case FOREST:
 			{
 				struct forest * f = tree->node->forest;
-				generate_html_rec( fd, f->head, level );
-				generate_html_rec( fd, f->tail, level );
+				generate_html_rec( fd, f->head, level, prev_node_is_text );
+				generate_html_rec( fd, f->tail, level, prev_node_is_text );
 				break;
 			}
 			case FUN:

@@ -42,7 +42,7 @@ void yyerror(const char*);
 %token LET IN WHERE FUNT ARROW REC IF THEN ELSE
 %token <number> NUMBER
 %token bLEQ bLE bGEQ bGE bEQ bOR bAND bNOT bEMIT bNEQ
-%token <text> STRING STRING_SPACES SPACES LABEL LABEL_LEFT_SQUARE_BRACKET LABEL_LEFT_BRACKET
+%token <text> STRING STRING_SPACES SPACES LABEL LABEL_LEFT_SQUARE_BRACKET LABEL_LEFT_BRACKET STRING_ATTRIBUTE
 %type <node> tag tags string content numexp exprtag ite cond decl args decls file conds
 %type <attribute> attribute
 %right STRING STRING_SPACES // verifier si pas %left
@@ -53,26 +53,30 @@ void yyerror(const char*);
 file:
     decls tags
     {
-        mk_forest( false, $1, $2);
+        $$ = mk_forest( false, $1, $2);
+        root = $$;
     }
     | decls
     {
         $$ = $1;
+        root = $$;
     }
     | tags
     {
         $$ = $1;
+        root = $$;
     }
     | %empty
     {
         $$ = NULL;
+        root = $$;
     }
     ;
 
 decls: 
     decl ';' decls
     {
-        mk_forest( false, $1, $3 );
+        $$ = mk_forest( false, $1, $3 );
     }
     | decl ';'
     {
@@ -83,7 +87,7 @@ decls:
 decl:
     LET LABEL '=' tags
     {
-        mk_fun( $2, $4 );
+        $$ = mk_fun( $2, $4 );
     }
     | LET LABEL '=' numexp
     {
@@ -104,7 +108,7 @@ decl:
         while (iterator->node->fun->body != NULL){
             iterator = iterator->node->fun->body;
         }
-        iterator->node->fun->body = $5;
+        iterator->node->fun->body = $7;
         $$ = mk_fun($2, $5);
     }
     | LET LABEL args '=' FUNT args ARROW tags
@@ -138,6 +142,13 @@ decl:
         }
         iterator->node->fun->body = $9;
         $$ = mk_fun($3, $4);
+    }
+    | bEMIT STRING tags
+    {
+       $$ = mk_app(
+            mk_app( mk_binop(EMIT), mk_word($2) ), $3
+            );
+        emit($2, $3);
     }
 	;
 
@@ -290,7 +301,7 @@ ite:
 numexp:
     NUMBER
     {
-        mk_integer( $1 );
+        $$ = mk_integer( $1 );
     }
     | numexp bPLUS numexp 
     {
@@ -335,40 +346,40 @@ tags:
 	tag tags
 	{
         if ($1 != NULL)
-            $$ = mk_forest( 1, $1, $2 );
+            $$ = mk_forest( true, $1, $2 );
         else
             $$ = NULL;
-		root = $$;
+		//root = $$;
 	}
 	| tag
 	{
 		if ($1 != NULL)
-            $$ = mk_forest(1, $1, NULL);
+            $$ = mk_forest( true, $1, NULL);
 		else
             $$ = NULL;
-		root = $$;
+		//root = $$;
 	}
 	| '{' tags '}'
 	{
 
 		if ($2 != NULL)
-            $$ = mk_forest(1, $2, NULL);
+            $$ = mk_forest( true, $2, NULL);
 		else
 		    $$ = NULL;
-		root = $$;
+		//root = $$;
 	}
 	| '{' tags '}' tags
 	{
 
 		if ($2 != NULL)
-            $$ = mk_forest(1, $2, $4);
+            $$ = mk_forest( true, $2, $4);
 		else
             $$ = NULL;
-		root = $$;
+		//root = $$;
 	}
 	| exprtag
 	{
-	    $$ = mk_forest(1, $1, NULL);
+	    $$ = mk_forest( true, $1, NULL);
 	}
 	;
 	
@@ -392,7 +403,7 @@ exprtag:
 	}
 	| LABEL
 	{
-	    mk_var( $1 );
+	    $$ = mk_var( $1 );
 	}
 
 /*
@@ -431,13 +442,14 @@ tag:
 
 //Un ensemble d'attributs
 attribute:
-    LABEL '=' string
+    LABEL '=' STRING
     {
-        $$ = mk_attributes( $1, $3->node->forest->head->node->str, NULL );
+        $$ = mk_attributes( $1, $3, NULL );
+    
     }
-    | LABEL '=' string attribute
+    | LABEL '=' STRING attribute
     {
-        $$ = mk_attributes( $1, $3->node->forest->head->node->str, $4 );
+        $$ = mk_attributes( $1, $3, $4 );
     }
 	;
 
@@ -445,31 +457,31 @@ attribute:
 content:
     string content
     {
-        $$ = mk_forest( 1, $1, $2 );
+        $$ = mk_forest( true, $1, $2 );
     }
     | tag content
     {
-        $$ = mk_forest( 1, $1, $2 );
+        $$ = mk_forest( true, $1, $2 );
     }
     | string
     {
-        mk_forest( 1, $1, NULL );
+        $$ = $1;
     }
     | tag
     {
-        mk_forest( 1, $1, NULL );
+        $$ = $1;
     }
     | exprtag
     {
-        mk_forest( 1, $1, NULL);
+        $$ = $1;
     }
     | exprtag ',' content
     {
-        mk_forest( 1, $1, $3);
+        $$ = mk_forest( true, $1, $3);
     }
     | '{' content '}'
     {
-        mk_forest( 1, $2, NULL );
+        $$ = mk_forest( true, $2, NULL );
     }
 	;
 
@@ -477,19 +489,19 @@ content:
 string: // tester avec un espace juste après les "
     STRING string
     {
-        $$ = mk_forest( 1, mk_word( $1 ), $2 );
+        $$ = mk_forest( true, mk_word( $1 ), $2 );
     }
 	| STRING_SPACES string
     {
-        $$ = $2;
-        //add_space( $$ );
+        $$ = add_space( $2 );
     }
     | STRING
     {
-        $$ = mk_forest( 1, mk_word( $1 ), NULL );
+        $$ = mk_word( $1 );
     }
     | STRING_SPACES {
-        //$$ = mk_forest( 1, add_space( mk_word( "" ) ), NULL );
+        char * void_string = "";
+        $$ = add_space( mk_word( void_string ) );
     }
 	;
 

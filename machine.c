@@ -3,10 +3,11 @@
 #include <string.h>
 #include <assert.h>
 #include "machine.h"
-#include "pattern.h"
+#include "pattern_matching.h"
 
 
 void emit( char * file, struct ast * ast){
+    fprintf(stderr, "%s\n", file);
     assert(file!=NULL && (ast ==NULL || ast!= NULL));
     generate_html( ast, file );
 }

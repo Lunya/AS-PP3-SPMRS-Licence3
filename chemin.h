@@ -10,8 +10,19 @@ struct dir{
 };
 
 struct path{
-	int n;
-	struct dir * dir;
-}; 
+	int n;					// nombre de répertoires a remonter pour trouver le fichier (../)
+	struct dir * dir;		// liste chainée représentant le répertoire, fichier, fonction
+};
+
+/*
+../../../../../file/app/foo.jhtml
+$.....file/app/foo.jhtml->func
+$ on jette
+..... devient 5 dans path->n
+file/, app/ deviennent des dir avec descr a DIR
+foo.jhtml devent filename
+-> on jette
+func devient declname
+*/
 
 #endif // CHEMIN_H
