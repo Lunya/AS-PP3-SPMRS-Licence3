@@ -23,9 +23,9 @@ enum ast_type {
     DECLREC   // Declarations recursives (let rec ... where rec ...)
 };
 
-enum binop{ PLUS, MINUS, MULT, DIV, LEQ, LE, GEQ, GE, EQ, OR, AND };
+enum binop{ PLUS, MINUS, MULT, DIV, LEQ, LE, GEQ, GE, EQ, NEQ, OR, AND, EMIT };
 
-enum unaryop {NOT};
+enum unaryop { NOT, NEG };
 
 struct ast;
 
@@ -52,11 +52,6 @@ struct forest{
     bool is_value;
     struct ast * head;
     struct ast * tail;
-};
-
-struct word{
-    char *str;
-    bool space;
 };
 
 struct fun{
@@ -86,13 +81,11 @@ struct declrec{
     struct ast * body;
 };
 
-
 union node{
     int num;
     enum binop binop;
     enum unaryop unaryop;
-    char * var;
-    struct word * word;  // peut representer ou bien une variable ou encore un mot
+    char * str;
     struct path * chemin;
     struct app * app;
     struct tree * tree;
@@ -115,7 +108,6 @@ struct ast * mk_var(char * var);
 struct ast * mk_import(struct path * chemin);
 struct ast * mk_app(struct ast * fun, struct ast * arg);
 struct ast * mk_word(char * str);
-struct ast * add_space(struct ast * word);
 struct ast * mk_tree(char * label, bool is_value, bool nullary,
                      struct attributes * att, struct ast * child);
 struct ast * mk_forest(bool is_value, struct ast * head, struct ast * tail);
@@ -123,8 +115,13 @@ struct ast * mk_fun(char * id, struct ast * body);
 struct ast * mk_match(struct ast * ast, struct patterns * patterns);
 struct ast * mk_cond(struct ast * cond, struct ast * then_br, struct ast * else_br);
 struct ast * mk_declrec(char * id, struct ast * body);
+
 struct attributes * mk_attributes(char * key, char * value , struct attributes * next);
+//struct ast * add_space(struct ast * word);
+struct ast * mk_forest(bool is_value, struct ast * head, struct ast * tail);
 
 void show_ast(const struct ast * tree, const char * file_name);
+
+void generate_html(const struct ast * tree, const char * file_name);
 
 #endif // AST_H

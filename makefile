@@ -1,18 +1,16 @@
 CFLAGS=-std=c99 -Wall
 CFLAGS2=-std=c99 -g -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes
 LDLIBS= -lfl -ly -lm
-INCLUDES=color_print.c ast.c variables.c
+INCLUDES=color_print.c ast.c variables.c pattern.c import.c machine.c
 CC=gcc
 LEX=flex
 YACC=bison -d -v --graph
 OUT=spmrs
-TESTS_SOURCES=$(wildcard tests/*.jhtml)
-
+TESTS_SOURCES=$(basename $(wildcard tests/*.jhtml))
 
 $(OUT): $(INCLUDES) main.c analyseur.tab.c lex.yy.c
 	$(CC) $(CFLAGS) -o $(OUT) $^ $(LDLIBS)
-
-
+	
 debug: main.c analyseur.tab.c lex.yy.c
 	$(CC) $(CFLAGS2) -o $(OUT) $(INCLUDES) $^ $(LDLIBS)
 
@@ -21,7 +19,8 @@ lex.yy.c: analyseur.l analyseur.tab.h
 
 analyseur.tab.h analyseur.tab.c: analyseur.y
 	$(YACC) $^
-	dot -Tpng analyseur.dot -o analyseur.png
+#	dot -Tsvg analyseur.dot -o analyseur.svg
+#	rm analyseur.dot
 
 .PHONY: all test clean check 
 
@@ -33,18 +32,19 @@ test: $(OUT) analyseur.input
 check: all
 	for i in $(TESTS_SOURCES); do \
 		echo -e "\033[1;30;46mtest of: $$i\033[0m"; \
-		if ./$(OUT) $$i.dot < $$i $$? -eq 0; then \
+		if ./$(OUT) $(addsuffix .jhtml, $$i) $$i.dot $$? -eq 0; then \
 			echo -e "\033[42mtest OK\033[0m"; \
 		else \
 			echo -e "\033[41mtest NOT really OK\033[0m"; \
 		fi; \
-		dot -Tsvg $$i.dot -o $$i.svg; \
+		dot -Tsvg $(addsuffix .dot, $$i) -o $(addsuffix .svg, $$i); \
+		rm $(addsuffix .dot, $$i); \
 	done
 
 errorcheck: all
 	for i in $(TESTS_SOURCES); do \
 		echo -e "\033[1;30;46mtest of: $$i\033[0m"; \
-		if gdb -ex=r --args ./$(OUT) < $$i $$? -eq 0; then \
+		if gdb -ex=r --args ./$(OUT) $(addsuffix .jhtml, $$i) $$? -eq 0; then \
 			echo -e "\033[42error test OK\033[0m"; \
 		else \
 			echo -e "\033[41error test NOT really OK\033[0m"; \
