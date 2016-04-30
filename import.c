@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "import.h"
+#include "machine.h"
 
 char * from_path_to_name(struct path * chemin){
     int file_length = chemin->n * 3;
@@ -65,7 +66,7 @@ struct closure * retrieve_name(struct path * chemin, char * name, struct files *
         }
     }
     fprintf(stderr,
-            "Variable %s du fichier %s non trouvÃ©e",
+            "Variable %s du fichier %s non trouvée",
             name, from_path_to_name(chemin));
     exit(1);
 }
@@ -101,7 +102,7 @@ struct closure * process_content(struct ast * a, struct env * e){
         return m->closure;
     }
     else{
-        fprintf(stderr,"Le contenu d'un fichier doit Ãªtre un arbre ou une forÃªt");
+        fprintf(stderr,"Le contenu d'un fichier doit être un arbre ou une forêt");
         exit(1);
     }
 }

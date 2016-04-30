@@ -1,4 +1,7 @@
-let f v1 v2 = div{v1, v2};
-let g = fun z t -> div{z, t};
-let f x1 x2 = fun y1 y2 -> div{y1, y2} div{x1, x2};
+let double v1 = div{v1, v1};
+let triple = fun t1 -> div{t1, t1, t1};
+let quadruple tree = span{tree, tree, tree, div{tree}};
+let inverse x1 = fun y1 -> div{y1, x1};
 let rec h x1 x2 = fun y1 y2 -> div{y1, y2};
+
+emit "tests/test8.html" double a[href="coucou"]{"licorne"};

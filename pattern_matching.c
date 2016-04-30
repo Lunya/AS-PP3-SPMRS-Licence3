@@ -183,14 +183,15 @@ bool match_var(struct pattern_var * pat, struct ast ** ast, struct env ** e){
 
 bool match_forest(struct pforest *  pforest, struct ast ** ast, struct env ** e){
     assert(ast !=NULL);
+    bool ret_val = false;
     if(pforest==NULL || *ast==NULL){
-        return pforest==NULL && *ast==NULL;
+        ret_val = pforest==NULL && *ast==NULL;
     }
     else{
         assert(pforest->head);
         switch(pforest->head->ptype){
         case WILDCARD:
-            return match_wildcard(pforest->head->pnode->wildcard,ast) &&
+            ret_val = match_wildcard(pforest->head->pnode->wildcard,ast) &&
                 match_ind(pforest->tail,ast,e);
         case PTREE:
             if((*ast)->type==FOREST &&
@@ -199,9 +200,9 @@ bool match_forest(struct pforest *  pforest, struct ast ** ast, struct env ** e)
                           (*ast)->node->forest->head->node->tree,
                           e)){
                 *ast = (*ast)->node->forest->tail;
-                return match_ind(pforest->tail,ast,e);}
+                ret_val = match_ind(pforest->tail,ast,e);}
             else{
-                return false;
+                ret_val = false;
             }
         case PSTRING:
             if((*ast)->type==FOREST &&
@@ -209,14 +210,14 @@ bool match_forest(struct pforest *  pforest, struct ast ** ast, struct env ** e)
                 ! strcmp(pforest->head->pnode->pstring->string,
                          (*ast)->node->forest->head->node->str)){
                 *ast = (*ast)->node->forest->tail;
-                return match_ind(pforest->tail,ast,e);}
-            else{return false;}
+                ret_val = match_ind(pforest->tail,ast,e);}
+            else{ret_val = false;}
         case PVAR:
-            return match_var(pforest->head->pnode->pvar,ast,e) &&
+            ret_val = match_var(pforest->head->pnode->pvar,ast,e) &&
                 match_ind(pforest->tail, ast,e);
                 ;
         case PFOREST:
-            return match_forest(pforest->head->pnode->pforest,ast,e) &&
+            ret_val = match_forest(pforest->head->pnode->pforest,ast,e) &&
                 match_ind(pforest->tail,ast,e);
         case ANYTREE:
             if((*ast)->type==FOREST &&
@@ -225,12 +226,13 @@ bool match_forest(struct pforest *  pforest, struct ast ** ast, struct env ** e)
                           (*ast)->node->forest->head->node->tree,
                           e)){
                 *ast = (*ast)->node->forest->tail;
-                return match_ind(pforest->tail,ast,e);}
+                ret_val = match_ind(pforest->tail,ast,e);}
             else{
-                return false;
+                ret_val = false;
             }
         }
     }
+    return ret_val;
 }
 
 

@@ -20,8 +20,8 @@
 
 extern FILE * yyin;
 extern struct ast * root;
-extern struct closure * cl;
-//extern struct env * env;
+struct env * initial_env;
+
 
 int main(int argc, char **argv)
 {
@@ -40,11 +40,11 @@ int main(int argc, char **argv)
 	    }
 	    else
 	    {
-	        //cl = mk_closure( root, env );
 	        yyin = input_file;
+	        
 	        retCode = yyparse();
 	        fclose( input_file );
-	        show_ast(root, argv[2]);
+	        show_ast( root, argv[2] );
 	    }
         //printNode(root);
         

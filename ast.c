@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "color_print.h"
 #include "ast.h"
 #include "import.h"
 
@@ -127,6 +128,7 @@ struct ast * add_space(struct ast * word){
 	    int str_len = strlen( word->node->str );
 	    char * new_str = malloc( str_len + 2 );
 	    strcpy( new_str, word->node->str );
+	    free( word->node->str );
 	    new_str[str_len] = ' ';
 	    new_str[str_len + 1] = '\0';
 	    word->node->str = new_str;
@@ -134,8 +136,16 @@ struct ast * add_space(struct ast * word){
 	return word;
 }
 
-int iterations;
-void show_ast_rec(FILE *, const struct ast *, unsigned int, unsigned int *, unsigned int *);
+struct patterns * mk_patterns( struct pattern * pattern, struct ast * res, struct patterns * next)
+{
+	struct patterns *e = malloc(sizeof(struct patterns));
+	e->pattern = pattern;
+	e->res = res;
+	e->next = next;
+	return e;
+}
+
+void show_ast_rec(FILE *, const struct ast *, unsigned int, unsigned int *, unsigned int *, int *);
 void show_ast(const struct ast * tree, const char * file_name)
 {
 	FILE * fd = fopen(file_name, "w");
@@ -145,6 +155,33 @@ Usage : dot -Tpng %s -o graph.png\n\
 digraph G {\n\
 \tedge [arrowhead=empty];\n",
 	file_name);
+/*
+\tsubgraph cluster_legend {\n\
+\t\tlabel = <<font point-size=\"20\">Legend</font>>;\n\
+\t\tnode [shape=plaintext];\n\
+\t\trankdir=LR;\n\
+\t\tkey1 [label=<<table border=\"0\">\n\
+\t\t<tr><td port=\"e1\">C son pointer</td></tr>\n\
+\t\t<tr><td port=\"e2\">C brother pointer</td></tr>\n\
+\t\t<tr><td port=\"e3\">tree representation</td></tr>\n\
+\t\t<tr><td port=\"e4\">C attribute pointer</td></tr>\n\
+\t\t<tr><td port=\"e5\">tree representation</td></tr>\n\
+\t\t</table>>,];\n\
+\t\tkey2 [label=<<table border=\"0\">\n\
+\t\t<tr><td port=\"e1\"> </td></tr>\n\
+\t\t<tr><td port=\"e2\"> </td></tr>\n\
+\t\t<tr><td port=\"e3\"> </td></tr>\n\
+\t\t<tr><td port=\"e4\"> </td></tr>\n\
+\t\t<tr><td port=\"e5\"> </td></tr>\n\
+\t\t</table>>,];\n\
+\t\tkey1:e1:e -> key2:e1:w [color=\"#ff8800\"];\n\
+\t\tkey1:e2:e -> key2:e2:w [color=\"#ff0000\"];\n\
+\t\tkey1:e3:e -> key2:e3:w [color=\"#ff8800\", style=dotted];\n\
+\t\tkey1:e4:e -> key2:e4:w [color=\"#0088ff\"];\n\
+\t\tkey1:e5:e -> key2:e5:w [color=\"#0088ff\", style=dotted];\n\
+\t\t{rank = same; key1; key2}\n\
+\t}\n"
+*/
 	fprintf(fd, "\tsubgraph cluster_legend {\n\
 \t\tlabel = <<font point-size=\"20\">Legend</font>>;\n\
 \t\tnode [shape=plaintext];\n\
@@ -173,17 +210,17 @@ digraph G {\n\
 	fprintf(fd, "\t\"node0\" [shape=none, label=\"\"]\n");
 	unsigned int id = 1;
 	unsigned int attr = 1;
-	iterations = 0;
-	show_ast_rec(fd, tree, 0, &id, &attr);
+	int max_iterations = 10000;
+	show_ast_rec(fd, tree, 0, &id, &attr, &max_iterations);
 	fprintf(fd, "}\n");
 	fclose(fd);
 }
 
-void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsigned int * id, unsigned int * attr)
+void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsigned int * id, unsigned int * attr, int * max_iterations)
 {
-    if (iterations < 1000)
+    if ( *max_iterations > 0 )
     {
-        iterations ++;
+        (*max_iterations) --;
     	unsigned int actual_node = *id;
     	unsigned int actual_attributes = *attr;
     	if (tree != NULL)
@@ -277,6 +314,44 @@ void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsig
     			}
     			case IMPORT:
     			{
+    			    struct path * p = tree->node->chemin;
+    			    fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+    					<tr><td border=\"1\"><font color=\"#880000\">Type: PATH</font></td></tr>\
+    					<tr><td border=\"1\"><font color=\"#880000\">n: %d</font></td></tr>\
+    					</table>>];\n",
+    					actual_node,
+    					p->n
+    				);
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#ff00ff\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				struct dir * iterator = p->dir;
+    				while ( iterator != NULL )
+    				{
+    					fprintf(fd, "\t\"node%d\" [shape=none, label=<<table border=\"0\" cellspacing=\"0\">\
+        					<tr><td border=\"1\"><font color=\"#880088\">Type: dir</font></td></tr>\
+        					<tr><td border=\"1\"><font color=\"#880000\">str: %s</font></td></tr>\
+        					<tr><td border=\"1\"><font color=\"#880000\">descr: %s</font></td></tr>\
+        					</table>>];\n",
+    						*attr,
+    						iterator->str,
+        					iterator->descr == DIR ? "DIR" : iterator->descr == FILENAME ? "FILENAME" : iterator->descr == DECLNAME ? "DECLNAME" : "unknown"
+        				);
+        				if (actual_attributes == *attr) {
+    						fprintf(fd, "\t\"node%d\" -> \"attribute%d\" [color=\"#ff00ff\"];\n",
+    							actual_node,
+    							*attr
+    						);
+    					} else {
+    						fprintf(fd, "\t\"attribute%d\" -> \"attribute%d\" [color=\"#ff00ff\"];\n",
+    							(*attr) - 1,
+    							*attr
+    						);
+    					}
+        				(*attr) ++;
+        				iterator = iterator->dir;
+    				}
     				break;
     			}
     			case APP:
@@ -294,9 +369,9 @@ void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsig
     				);
     				
     				(*id) ++;
-    				show_ast_rec(fd, a->fun, actual_node, id, attr);
+    				show_ast_rec(fd, a->fun, actual_node, id, attr, max_iterations);
     				(*id) ++;
-    				show_ast_rec(fd, a->arg, actual_node, id, attr);
+    				show_ast_rec(fd, a->arg, actual_node, id, attr, max_iterations);
     				break;
     			}
     			case WORD:
@@ -365,7 +440,7 @@ void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsig
     					iterator_attr = iterator_attr->next;
     				}
     				(*id) ++;
-    				show_ast_rec(fd, t->child, actual_node, id, attr);
+    				show_ast_rec(fd, t->child, actual_node, id, attr, max_iterations);
     				break;
     			}
     			case FOREST:
@@ -385,9 +460,9 @@ void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsig
     				);
     
     				(*id) ++;
-    				show_ast_rec(fd, f->head, actual_node, id, attr);
+    				show_ast_rec(fd, f->head, actual_node, id, attr, max_iterations);
     				(*id) ++;
-    				show_ast_rec(fd, f->tail, actual_node, id, attr);
+    				show_ast_rec(fd, f->tail, actual_node, id, attr, max_iterations);
     				break;
     			}
     			case FUN:
@@ -407,11 +482,55 @@ void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsig
     				);
     				
     				(*id) ++;
-    				show_ast_rec(fd, f->body, actual_node, id, attr);
+    				show_ast_rec(fd, f->body, actual_node, id, attr, max_iterations);
     				break;
     			}
     			case MATCH:
     			{
+    			    struct match * m = tree->node->match;
+    			    show_ast_rec( fd, m->ast, actual_node, id, attr, max_iterations );
+    			    
+    			    struct patterns * iterator = m->patterns;
+    			    while ( iterator != NULL )
+    			    {
+    			        struct pattern * p = iterator->pattern;
+    			        //iterator->res
+    			        char * text;
+        			    switch ( p->ptype )
+        			    {
+                            case WILDCARD: text = "WILDCARD"; break;
+                            case PTREE: text = "PTREE"; break;
+                            case PSTRING: text = "PSTRING"; break;
+                            case PVAR: text = "PVAR"; break;
+                            case PFOREST: text = "PFOREST"; break;
+                            case ANYTREE: text = "ANYTREE"; break;
+                            default: text = "bad value";
+        			    }
+    			        fprintf(fd, "\t\"attribute%d\" [label=<<table border=\"0\" cellspacing=\"0\">\
+    			            <tr><td border=\"1\"><font color=\"#880000\">ptype: %s</font></td></tr>\
+    						<tr><td border=\"1\"><font color=\"#008800\">pnode: %s</font></td></tr></table>>, shape=none];\n",
+    						*attr,
+    						text,
+    						"Et un pnode qui me casse les couilles"
+    					);
+    					if (actual_attributes == *attr) {
+    						fprintf(fd, "\t\"node%d\" -> \"attribute%d\" [color=\"#0088ff\"];\n",
+    							actual_node,
+    							*attr
+    						);
+    					} else {
+    						fprintf(fd, "\t\"attribute%d\" -> \"attribute%d\" [color=\"#0088ff\"];\n",
+    							(*attr) - 1,
+    							*attr
+    						);
+    					}
+    					fprintf(fd, "\t\"node%d\" -> \"attribute%d\" [color=\"#0088ff\", style=dotted];\n",
+    						actual_node,
+    						*attr
+    					);
+    					(*attr) ++;
+    			        iterator = iterator->next;
+    			    }
     				break;
     			}
     			case COND:
@@ -430,11 +549,11 @@ void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsig
     				);
     				
     				(*id) ++;
-    				show_ast_rec(fd, c->cond, actual_node, id, attr);
+    				show_ast_rec(fd, c->cond, actual_node, id, attr, max_iterations);
     				(*id) ++;
-    				show_ast_rec(fd, c->then_br, actual_node, id, attr);
+    				show_ast_rec(fd, c->then_br, actual_node, id, attr, max_iterations);
     				(*id) ++;
-    				show_ast_rec(fd, c->else_br, actual_node, id, attr);
+    				show_ast_rec(fd, c->else_br, actual_node, id, attr, max_iterations);
     				break;
     			}
     			case DECLREC:
@@ -442,15 +561,24 @@ void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsig
     				break;
     			}
     			default:
-    				printf("unknown tree type %d\n", tree->type);
+    			     fprintf(fd, "\t\"node%d\" [label=\"ERROR type%d\"];\n",
+    					actual_node,
+    					tree->type
+    				);
+    				
+    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#000000\"];\n",
+    					parent,
+    					actual_node
+    				);
+    				printf("unknown tree type %d node%d\n", tree->type, *id );
     		}
     	}
     }
 }
 
 
-void generate_html_rec(FILE *, const struct ast *, unsigned int, bool *);
-void generate_html(const struct ast * tree, const char * file_name)
+void generate_html_rec(FILE *, struct ast *, unsigned int, bool *);
+void generate_html( struct ast * tree, const char * file_name)
 {
 	FILE * fd = fopen(file_name, "w");
 	fprintf(fd, "<!DOCTYPE HTML>\n");
@@ -459,7 +587,7 @@ void generate_html(const struct ast * tree, const char * file_name)
 	fclose(fd);
 }
 
-void generate_html_rec(FILE * fd, const struct ast * tree, unsigned int level, bool * prev_node_is_text)
+void generate_html_rec(FILE * fd, struct ast * tree, unsigned int level, bool * prev_node_is_text)
 {
 	if (tree != NULL)
 	{
@@ -483,7 +611,7 @@ void generate_html_rec(FILE * fd, const struct ast * tree, unsigned int level, b
 			}
 			case VAR:
 			{
-			    fprintf(stderr, "%s", tree->node->str );
+			    fprintfC( stderr, TEXT_RED, "%s\n", tree->node->str );
 				break;
 			}
 			case IMPORT:
@@ -492,10 +620,13 @@ void generate_html_rec(FILE * fd, const struct ast * tree, unsigned int level, b
 			}
 			case APP:
 			{
+			    fprintfC( stderr, TEXT_RED, "unexpected app\n");
 				break;
 			}
 			case WORD:
 			{
+			    if ( !*prev_node_is_text )
+			        fprintf( fd, "%s", indent );
 				fprintf( fd, "%s", tree->node->str );
 				*prev_node_is_text = true;
 				break;
@@ -503,30 +634,34 @@ void generate_html_rec(FILE * fd, const struct ast * tree, unsigned int level, b
 			case TREE:
 			{
 				struct tree * t = tree->node->tree;
-				*prev_node_is_text = false;
 				if ( *prev_node_is_text )
-				    fprintf( fd, "%s", indent );
+				    fprintf( fd, "\n" );
+				*prev_node_is_text = false;
+				
+				struct attributes * iterator_attr = t->attributes;
+				fprintf( fd, "%s<%s", indent, t->label );
+				while (iterator_attr != NULL)
+				{
+					fprintf( fd,
+						" %s=\"%s\"",
+						iterator_attr->key->node->str,
+						iterator_attr->value->node->str
+					);
+					iterator_attr = iterator_attr->next;
+				}
+				
 				if ( t->nullary )
 				{
-					fprintf( fd, "%s<%s />\n", indent, t->label );
+					fprintf( fd, " />\n" );
 				}
 				else
 				{
-					struct attributes * iterator_attr = t->attributes;
-					fprintf( fd, "%s<%s", indent, t->label );
-					while (iterator_attr != NULL)
-					{
-						fprintf( fd,
-							" %s=\"%s\"",
-							iterator_attr->key->node->str,
-							iterator_attr->value->node->str
-						);
-						iterator_attr = iterator_attr->next;
-					}
 					fprintf( fd, ">\n" );
-					fprintf( fd, "%s", indent );
 					generate_html_rec( fd, t->child, level + 1, prev_node_is_text );
+					if ( *prev_node_is_text )
+				        fprintf( fd, "\n" );
 					fprintf( fd, "%s</%s>\n", indent, t->label );
+					*prev_node_is_text = false;
 				}
 				break;
 			}
@@ -560,4 +695,26 @@ void generate_html_rec(FILE * fd, const struct ast * tree, unsigned int level, b
 				printf("unknown tree type %d\n", tree->type);
 		}
 	}
+}
+
+
+void print_ast_type( enum ast_type t)
+{
+    switch (t)
+    {
+        case INTEGER: fprintf(stderr, "INTEGER\n"); break;
+        case BINOP: fprintf(stderr, "BINOP\n"); break;
+        case UNARYOP: fprintf(stderr, "UNARYOP\n"); break;
+        case VAR: fprintf(stderr, "VAR\n"); break;
+        case IMPORT: fprintf(stderr, "IMPORT\n"); break;
+        case APP: fprintf(stderr, "APP\n"); break;
+        case WORD: fprintf(stderr, "WORD\n"); break;
+        case TREE: fprintf(stderr, "TREE\n"); break;
+        case FOREST: fprintf(stderr, "FOREST\n"); break;
+        case FUN: fprintf(stderr, "FUN\n"); break;
+        case MATCH: fprintf(stderr, "MATCH\n"); break;
+        case COND: fprintf(stderr, "COND\n"); break;
+        case DECLREC: fprintf(stderr, "DECLREC\n"); break;
+        default : fprintf(stderr, "ast_type unknown line: %d\n", __LINE__);
+    }
 }

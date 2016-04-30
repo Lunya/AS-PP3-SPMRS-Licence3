@@ -10,6 +10,7 @@ void emit( char * file, struct ast * ast){
     fprintf(stderr, "%s\n", file);
     assert(file!=NULL && (ast ==NULL || ast!= NULL));
     generate_html( ast, file );
+    show_ast( ast, "tests/last_of_lasts.dot" );
 }
 
 struct env * mk_env(char * var, struct closure * value, struct env * next){
@@ -448,7 +449,7 @@ void pop_treecompforest(struct machine * m){
     }
     m->closure = mk_closure(mk_tree(
         m->stack->top->item->tree_forest->label,
-        true,
+        m->stack->top->item->tree_forest->nullary,
         m->stack->top->item->tree_forest->space,
         m->stack->top->item->tree_forest->attributes,
         forest), NULL);
@@ -981,6 +982,15 @@ void on_fun(struct machine * m){
         case FUNCTION:
             pop_function(m);
             break;
+        case TREECOMPATT: fprintf(stderr, "TREECOMPATT "); break;
+        case TREECOMPFOREST: fprintf(stderr, "TREECOMPFOREST "); break;
+        case ATTCOMPKEY: fprintf(stderr, "ATTCOMPKEY "); break;
+        case ATTCOMPVALUE: fprintf(stderr, "ATTCOMPVALUE "); break;
+        case ATTCOMPNEXT: fprintf(stderr, "ATTCOMPNEXT "); break;
+        case FORESTCOMPHEAD: fprintf(stderr, "FORESTCOMPHEAD "); break;
+        case FORESTCOMPTAIL: fprintf(stderr, "FORESTCOMPTAIL "); break;
+        case MATCHCOMP: fprintf(stderr, "MATCHCOMP "); break;
+        case CONDCOMP: fprintf(stderr, "CONDCOMP "); break;
         default:
             fprintf(stderr,"Erreur de typage, fonction utilisée dans un contexte inadatpé.");
             exit(1);
@@ -988,7 +998,12 @@ void on_fun(struct machine * m){
         }
     }
 }
-
+/*
+enum item_type{
+    CLOSURE, TREECOMPATT, TREECOMPFOREST, ATTCOMPKEY,ATTCOMPVALUE, ATTCOMPNEXT,
+    FORESTCOMPHEAD, FORESTCOMPTAIL, FUNCTION, MATCHCOMP, CONDCOMP
+};
+*/
 void on_match(struct machine * m){
     struct match_computation * mc = malloc(sizeof(struct match_computation));
     mc->patterns = m->closure->value->node->match->patterns;

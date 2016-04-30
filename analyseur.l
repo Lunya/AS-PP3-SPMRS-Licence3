@@ -69,6 +69,22 @@ else {
 	return ELSE;
 }
 
+match {
+	return bMATCH;
+}
+
+with {
+	return WITH;
+}
+
+end {
+	return END;
+}
+
+_ {
+	return '_';
+}
+
 let[[:space:]]* {
 	printfC(TEXT_CYAN, "%s", yytext);
 	return LET;
@@ -133,6 +149,17 @@ emit {
 	return '{';
 }
 
+"_{"[[:space:]]* {
+	printfC(TEXT_MAGENTA, "_{");
+	return UNDERSCORE_LEFT_BRACKET;
+	
+}
+	
+"|"[[:space:]]*	{
+	printfC(TEXT_MAGENTA, "|");
+	return '|'
+}
+
 [[:space:]]*"}"	{
 	printfC(TEXT_MAGENTA, "}");
 	return '}';
@@ -189,7 +216,7 @@ emit {
 	{
 		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
 		//Enlever le crochet
-		memcpy(yylval.text, yytext, strlen(yytext) - 1);
+		strncpy(yylval.text, yytext, strlen(yytext) - 1);
 		printfC(TEXT_YELLOW, "%s", yytext);
 		BEGIN ATTRIBUTES;
 		return LABEL_LEFT_SQUARE_BRACKET;
@@ -205,7 +232,7 @@ emit {
 	{
 		yylval.text = malloc((strlen(yytext) + 1) * sizeof(char)); 
 		//Enlever l'accolade
-		memcpy(yylval.text, yytext, strlen(yytext) - 1);
+		strncpy(yylval.text, yytext, strlen(yytext) - 1);
 		printfC(TEXT_YELLOW, "%s", yytext);
 		return LABEL_LEFT_BRACKET;
 	}

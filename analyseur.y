@@ -21,8 +21,18 @@
 
 //Gestion des variables
 //struct vars * environment = NULL;
-struct ast * root = NULL;
+//extern struct env * initial_env;
+struct env * e = NULL;
 struct closure * cl = NULL;
+struct stack * st = NULL;
+struct machine * m = NULL;
+
+struct ast * root = NULL;
+/*
+
+struct closure * cl = NULL;
+struct env * e = initial_env;
+*/
 
 int yylex(void);
 void yyerror(const char*);
@@ -34,49 +44,80 @@ void yyerror(const char*);
 	char * text;
     struct ast * node;
     struct attributes * attribute;
+    struct pattern * pattern;
+    struct patterns * patterns;
 }
 
 %left bPLUS bMINUS
 %left bMULT bDIV
 %left ';'
-%token LET IN WHERE FUNT ARROW REC IF THEN ELSE
+%token LET IN WHERE FUNT ARROW REC IF THEN ELSE bMATCH WITH END UNDERSCORE_LEFT_BRACKET
 %token <number> NUMBER
 %token bLEQ bLE bGEQ bGE bEQ bOR bAND bNOT bEMIT bNEQ
 %token <text> STRING STRING_SPACES SPACES LABEL LABEL_LEFT_SQUARE_BRACKET LABEL_LEFT_BRACKET STRING_ATTRIBUTE
-%type <node> tag tags string content numexp exprtag ite cond decl args decls file conds
+%type <node> tag tags string content numexp exprtag ite cond decl args decls file conds match multitags params
 %type <attribute> attribute
+%type <pattern> patterns pattern pvar wildcard
+%type <patterns> filters
 %right STRING STRING_SPACES // verifier si pas %left
 %start file
 %error-verbose
 %%
 
+/* 
+    UNDERSCORE_LEFT_BRACKET    shift, and go to state 154
+    LABEL                      shift, and go to state 155
+    LABEL_LEFT_SQUARE_BRACKET  shift, and go to state 156
+    '{'                        shift, and go to state 157
+    '}'                        shift, and go to state 158
+    '*'                        shift, and go to state 159
+    '/'                        shift, and go to state 160
+    '_' 
+*/
+
 file:
     decls tags
     {
-        $$ = mk_forest( false, $1, $2);
+        printf("decls tags\n");
+        $$ = mk_app(  $1, $2 );
         root = $$;
+        show_ast( root, "tests/tartine.dot" );
+        process_instruction($$, e);
     }
     | decls
     {
+        printf("decls\n");
         $$ = $1;
+        //$$ = mk_forest( false, $1, NULL );
         root = $$;
+        show_ast( root, "tests/tartine.dot" );
+        process_instruction($$, e);
     }
     | tags
     {
-        $$ = $1;
+        printf("tags\n");
+        //$$ = $1;
+        $$ = mk_forest( false, NULL, $1 );
+        //cl = process_content( $1, e );
+        //m = mk_machine(cl, )
         root = $$;
+        show_ast( root, "tests/tartine.dot" );
+        //process_instruction($$, e);
     }
     | %empty
     {
-        $$ = NULL;
+        printf("empty\n");
+        $$ = mk_forest( false, NULL, NULL );
+        //$$ = NULL;
         root = $$;
+        show_ast( root, "tests/tartine.dot" );
     }
     ;
 
 decls: 
     decl ';' decls
     {
-        $$ = mk_forest( false, $1, $3 );
+        $$ = mk_app( $1, $3 );
     }
     | decl ';'
     {
@@ -87,11 +128,15 @@ decls:
 decl:
     LET LABEL '=' tags
     {
+        //$$ = mk_fun( $2, $4 );
         $$ = mk_fun( $2, $4 );
+        e = process_binding_instruction($2, $4, e);
     }
     | LET LABEL '=' numexp
     {
+        //$$ = mk_fun( $2, $4 );
         $$ = mk_fun( $2, $4 );
+        e = process_binding_instruction($2, $4, e);
     }
     | LET LABEL args '=' tags
     {
@@ -99,8 +144,11 @@ decl:
         while (iterator->node->fun->body != NULL){
             iterator = iterator->node->fun->body;
         }
-        iterator->node->fun->body = $5;
-        $$ = mk_fun($2, $5);
+        iterator->node->fun->body = mk_fun( $2, $5 );
+        
+        $$ = $3;
+        //e = process_binding_instruction($2, $5, e);
+        //$$ = mk_fun($2, $5);
     }
     | LET LABEL '=' FUNT args ARROW tags
     {
@@ -108,8 +156,9 @@ decl:
         while (iterator->node->fun->body != NULL){
             iterator = iterator->node->fun->body;
         }
-        iterator->node->fun->body = $7;
-        $$ = mk_fun($2, $5);
+        iterator->node->fun->body = mk_fun( $2, $7 );
+        $$ = $5;
+        //e = process_binding_instruction($2, $$, e);
     }
     | LET LABEL args '=' FUNT args ARROW tags
     {
@@ -124,8 +173,8 @@ decl:
         while (iterator->node->fun->body != NULL){
             iterator = iterator->node->fun->body;
         }
-        iterator->node->fun->body = $8;
-        $$ = mk_fun($2, $3);
+        iterator->node->fun->body = mk_fun( $2, $8 );
+        $$ = $3;
     }
     | LET REC LABEL args '=' FUNT args ARROW tags
     {
@@ -140,15 +189,15 @@ decl:
         while (iterator->node->fun->body != NULL){
             iterator = iterator->node->fun->body;
         }
-        iterator->node->fun->body = $9;
-        $$ = mk_fun($3, $4);
+        iterator->node->fun->body = mk_fun( $3, $9 );
+        $$ = $3;
     }
     | bEMIT STRING tags
     {
        $$ = mk_app(
             mk_app( mk_binop(EMIT), mk_word($2) ), $3
             );
-        emit($2, $3);
+        //emit($2, $3);
     }
 	;
 
@@ -275,19 +324,7 @@ cond:
 ;
 
 ite:
-    IF conds THEN exprtag ELSE exprtag 
-    {
-        $$ = mk_cond( $2, $4, $6 );
-    }
-    | IF conds THEN tag ELSE exprtag 
-    {
-        $$ = mk_cond( $2, $4, $6 );
-    }
-    | IF conds THEN exprtag ELSE tag 
-    {
-        $$ = mk_cond( $2, $4, $6 );
-    }
-    | IF conds THEN tag ELSE tag 
+    IF conds THEN tags ELSE tags 
     {
         $$ = mk_cond( $2, $4, $6 );
     }
@@ -339,49 +376,50 @@ numexp:
     {
         $$ = $2;
     }
-    ;
+;
 
 //Une forêt de balises
 tags:
 	tag tags
 	{
         if ($1 != NULL)
-            $$ = mk_forest( true, $1, $2 );
+            $$ = mk_forest( false, $1, $2 );
         else
             $$ = NULL;
-		//root = $$;
 	}
 	| tag
 	{
 		if ($1 != NULL)
-            $$ = mk_forest( true, $1, NULL);
+            $$ = mk_forest( false, $1, NULL);
 		else
             $$ = NULL;
-		//root = $$;
 	}
 	| '{' tags '}'
 	{
 
 		if ($2 != NULL)
-            $$ = mk_forest( true, $2, NULL);
+            $$ = mk_forest( false, $2, NULL);
 		else
 		    $$ = NULL;
-		//root = $$;
 	}
 	| '{' tags '}' tags
 	{
 
 		if ($2 != NULL)
-            $$ = mk_forest( true, $2, $4);
+            $$ = mk_forest( false, $2, $4);
 		else
             $$ = NULL;
-		//root = $$;
 	}
 	| exprtag
 	{
-	    $$ = mk_forest( true, $1, NULL);
+	    $$ = mk_forest( false, $1, NULL);
 	}
-	;
+	| match
+	{
+	    $$ = $1;
+	}
+;
+
 	
 //Si quelqu'un a un moyen pour limiter les règles
 exprtag:
@@ -394,7 +432,7 @@ exprtag:
     | tag WHERE LABEL '=' tag
     {
         $$ = mk_app( 
-            mk_fun( $3, $1 ), $5
+            mk_fun( $3, mk_forest( false, $1, NULL) ), mk_forest( false, $5, NULL)
             );
     }
 	| ite 
@@ -405,16 +443,166 @@ exprtag:
 	{
 	    $$ = mk_var( $1 );
 	}
+	| LABEL params
+	{
+	    struct ast * iterator = $2;
+        while (iterator->node->app->fun != NULL){
+            iterator = iterator->node->app->fun;
+        }
+        fprintf(stderr, "%s\n", $1);
+        iterator->node->app->fun = mk_fun($1, NULL);
+        //iterator->node->app->fun = mk_forest(false, mk_word($1), NULL);
+        $$ = $2;
+	}
+;
 
-/*
+
+params:
+    tag params
+	{
+	    $$ = mk_app( $2, $1 );
+	}
+	| tag
+	{
+	    $$ = mk_app( NULL, $1 );
+	}
+	| exprtag params
+	{
+	    $$ = mk_app( $2, $1 );
+	}
+	| exprtag
+	{
+	    $$ = mk_app( NULL, $1 );
+	}
+;
+
+
 match:
-    MATCH tag WITH filters END;
+    bMATCH tags WITH filters END
+    {
+        $$ = mk_match($2, $4);
+    }
+;
 
-filters:    
+
+filters:
+    '|' LABEL_LEFT_BRACKET patterns '}' ARROW tags filters
+    {
+        $$ = mk_patterns(mk_ptree($2, false, $3), $6, $7);
+    }
+    | '|' LABEL_LEFT_BRACKET '}' ARROW tags filters
+    {
+        $$ = mk_patterns(mk_ptree($2, true, NULL), $5, $6);
+    }
+    | '|' UNDERSCORE_LEFT_BRACKET patterns '}' ARROW tags filters
+    {
+        $$ = mk_patterns(mk_anytree(false, $3), $6, $7);
+    }
+    | '|' UNDERSCORE_LEFT_BRACKET '}' ARROW tags filters
+    {
+        $$ = mk_patterns(mk_anytree(true, NULL), $5, $6);
+    }
+	| '|' LABEL_LEFT_BRACKET patterns '}' ARROW tags
+	{
+        $$ = mk_patterns(mk_ptree($2, false, $3), $6, NULL);
+	}
+	| '|' LABEL_LEFT_BRACKET '}' ARROW tags
+    {
+        $$ = mk_patterns(mk_ptree($2, true, NULL), $5, NULL);
+    }
+    | '|' UNDERSCORE_LEFT_BRACKET patterns '}' ARROW tags
+    {
+        $$ = mk_patterns(mk_anytree(false, $3), $6, NULL);
+    }
+    | '|' UNDERSCORE_LEFT_BRACKET '}' ARROW tags
+    {
+        $$ = mk_patterns(mk_anytree(true, NULL), $5, NULL);
+    }
+    ;
+
+patterns:
+	pattern patterns
+	{
+	    $$ = mk_pforest($1, $2);
+	}
+	| pattern
+	{
+	    $$ = mk_pforest($1, NULL);
+	}
+	;
+
+pattern:
+    wildcard
+    {
+        $$ = $1 ;
+    }
+    | LABEL_LEFT_BRACKET patterns '}'
+    {
+        $$ = mk_ptree($1, false, $2 );
+    }
+    | LABEL_LEFT_BRACKET '}'
+    {
+        $$ = mk_ptree($1, true, NULL );
+    }        
+	| '*' STRING '*'
+    {
+        $$ = mk_pstring($2);
+    }	
+    | pvar
+    {
+        $$ = $1;
+    }    
+    | '{' patterns '}'
+    {
+        $$ = $2;
+    }
+    | UNDERSCORE_LEFT_BRACKET patterns '}'
+    {
+        $$ = mk_anytree(false, $2);
+    }   
+    | UNDERSCORE_LEFT_BRACKET '}'
+    {
+        $$ = mk_anytree(true, NULL);
+    }       
+    ;
     
-filter:
-*/
-
+pvar:
+	LABEL
+    {
+        $$ = mk_pattern_var($1, TREEVAR);
+    }	
+	| '*' LABEL '*'
+    {
+        $$ = mk_pattern_var($2, STRINGVAR);
+    }	
+	| '/' LABEL '/'
+    {
+        $$ = mk_pattern_var($2, FORESTVAR);
+    }	
+	| '{' LABEL '}'
+    {
+        $$ = mk_pattern_var($2, ANYVAR);
+    }
+    ;
+	
+wildcard:
+    '_'
+    {
+        $$ = mk_wildcard(ANY);
+    }
+    | '*' '_' '*'
+    {
+        $$ = mk_wildcard(ANYSTRING);
+    }
+	| '/' '_' '/'
+	{
+        $$ = mk_wildcard(ANYFOREST);
+    }
+    | '{' '_' '}' 
+    {
+        $$ = mk_wildcard(ANYSEQ);
+    }
+    ;
 
 //Balise
 tag:
@@ -457,31 +645,32 @@ attribute:
 content:
     string content
     {
-        $$ = mk_forest( true, $1, $2 );
+        $$ = mk_forest( false, $1, $2 );
     }
     | tag content
     {
-        $$ = mk_forest( true, $1, $2 );
+        $$ = mk_forest( false, $1, $2 );
     }
     | string
     {
-        $$ = $1;
+        $$ = mk_forest(false, $1, NULL);
     }
     | tag
     {
-        $$ = $1;
+        $$ = mk_forest(false, $1, NULL);
     }
     | exprtag
     {
-        $$ = $1;
+        $$ = mk_forest(false, $1, NULL);
     }
     | exprtag ',' content
     {
-        $$ = mk_forest( true, $1, $3);
+        $$ = mk_forest( false, $1, $3);
     }
     | '{' content '}'
     {
-        $$ = mk_forest( true, $2, NULL );
+        //$$ = mk_forest( false, $2, NULL );
+        $$ = $2;
     }
 	;
 
@@ -489,19 +678,25 @@ content:
 string: // tester avec un espace juste après les "
     STRING string
     {
-        $$ = mk_forest( true, mk_word( $1 ), $2 );
+        $$ = mk_forest( false, mk_word( $1 ), $2 );
     }
 	| STRING_SPACES string
     {
-        $$ = add_space( $2 );
+        $2->node->forest->head = add_space( $2->node->forest->head );
+        //$<node>0->node->forest->head = add_space( $<node>0->node->forest->head );
+        //printf("add space to |%s|\n", $2->node->forest->head->node->str);
+        $$ = $2;
     }
     | STRING
     {
-        $$ = mk_word( $1 );
+        $$ = mk_forest( false, mk_word( $1 ), NULL );
     }
-    | STRING_SPACES {
-        char * void_string = "";
-        $$ = add_space( mk_word( void_string ) );
+    | STRING_SPACES
+    {
+        //printf("add space to ||\n");
+        char * void_string = malloc(1);
+        void_string[0] = '\0';
+        $$ = mk_forest( false, add_space( mk_word( void_string ) ), NULL );
     }
 	;
 

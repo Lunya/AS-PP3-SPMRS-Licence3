@@ -116,12 +116,21 @@ struct ast * mk_match(struct ast * ast, struct patterns * patterns);
 struct ast * mk_cond(struct ast * cond, struct ast * then_br, struct ast * else_br);
 struct ast * mk_declrec(char * id, struct ast * body);
 
+struct patterns * mk_patterns( struct pattern * pattern, struct ast * res, struct patterns * next);
+
 struct attributes * mk_attributes(char * key, char * value , struct attributes * next);
 struct ast * add_space(struct ast * word);
 struct ast * mk_forest(bool is_value, struct ast * head, struct ast * tail);
 
 void show_ast(const struct ast * tree, const char * file_name);
 
-void generate_html(const struct ast * tree, const char * file_name);
+void generate_html( struct ast * tree, const char * file_name);
+
+
+
+
+
+
+void print_ast_type( enum ast_type);
 
 #endif // AST_H
