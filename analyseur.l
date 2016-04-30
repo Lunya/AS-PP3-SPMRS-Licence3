@@ -157,7 +157,7 @@ emit {
 	
 "|"[[:space:]]*	{
 	printfC(TEXT_MAGENTA, "|");
-	return '|'
+	return '|';
 }
 
 [[:space:]]*"}"	{

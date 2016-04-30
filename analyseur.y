@@ -55,7 +55,7 @@ void yyerror(const char*);
 %token <number> NUMBER
 %token bLEQ bLE bGEQ bGE bEQ bOR bAND bNOT bEMIT bNEQ
 %token <text> STRING STRING_SPACES SPACES LABEL LABEL_LEFT_SQUARE_BRACKET LABEL_LEFT_BRACKET STRING_ATTRIBUTE
-%type <node> tag tags string content numexp exprtag ite cond decl args decls file conds match multitags params
+%type <node> tag tags string content numexp exprtag ite cond decl args decls file conds match params
 %type <attribute> attribute
 %type <pattern> patterns pattern pvar wildcard
 %type <patterns> filters
@@ -64,22 +64,12 @@ void yyerror(const char*);
 %error-verbose
 %%
 
-/* 
-    UNDERSCORE_LEFT_BRACKET    shift, and go to state 154
-    LABEL                      shift, and go to state 155
-    LABEL_LEFT_SQUARE_BRACKET  shift, and go to state 156
-    '{'                        shift, and go to state 157
-    '}'                        shift, and go to state 158
-    '*'                        shift, and go to state 159
-    '/'                        shift, and go to state 160
-    '_' 
-*/
 
 file:
     decls tags
     {
         printf("decls tags\n");
-        $$ = mk_app(  $1, $2 );
+        $$ = mk_app( $1, $2 );
         root = $$;
         show_ast( root, "tests/tartine.dot" );
         process_instruction($$, e);
@@ -103,6 +93,7 @@ file:
         root = $$;
         show_ast( root, "tests/tartine.dot" );
         //process_instruction($$, e);
+        process_instruction($$, e);
     }
     | %empty
     {
@@ -111,6 +102,7 @@ file:
         //$$ = NULL;
         root = $$;
         show_ast( root, "tests/tartine.dot" );
+        //process_instruction($$, e);
     }
     ;
 
@@ -152,13 +144,14 @@ decl:
     }
     | LET LABEL '=' FUNT args ARROW tags
     {
+        
         struct ast * iterator = $5;
         while (iterator->node->fun->body != NULL){
             iterator = iterator->node->fun->body;
         }
-        iterator->node->fun->body = mk_fun( $2, $7 );
+        iterator->node->fun->body = mk_fun( $2, $7);
         $$ = $5;
-        //e = process_binding_instruction($2, $$, e);
+        //e = process_binding_instruction($2, $5, e);
     }
     | LET LABEL args '=' FUNT args ARROW tags
     {
@@ -175,6 +168,7 @@ decl:
         }
         iterator->node->fun->body = mk_fun( $2, $8 );
         $$ = $3;
+        e = process_binding_instruction($2, $3, e);
     }
     | LET REC LABEL args '=' FUNT args ARROW tags
     {
@@ -190,7 +184,8 @@ decl:
             iterator = iterator->node->fun->body;
         }
         iterator->node->fun->body = mk_fun( $3, $9 );
-        $$ = $3;
+        $$ = $4;
+        e = process_binding_instruction($3, $4, e);
     }
     | bEMIT STRING tags
     {
@@ -414,6 +409,15 @@ tags:
 	{
 	    $$ = mk_forest( false, $1, NULL);
 	}
+	/*
+	| exprtag tags
+	{
+	    if ($1 != NULL)
+            $$ = mk_forest( false, $1, $2 );
+        else
+            $$ = NULL;
+	}
+	*/
 	| match
 	{
 	    $$ = $1;
@@ -466,15 +470,85 @@ params:
 	{
 	    $$ = mk_app( NULL, $1 );
 	}
-	| exprtag params
+	| LABEL params
 	{
-	    $$ = mk_app( $2, $1 );
+	    $$ = mk_app( $2, mk_word($1) );
 	}
-	| exprtag
+	| LABEL
 	{
-	    $$ = mk_app( NULL, $1 );
+	    $$ = mk_app( NULL, mk_word($1) );
 	}
 ;
+
+//Balise
+tag:
+	LABEL_LEFT_SQUARE_BRACKET attribute ']' '{' content '}'
+	{
+        $$ = mk_tree( $1, false, false, $2, $5 );
+	}
+	| LABEL_LEFT_SQUARE_BRACKET attribute ']' '/'
+	{
+        $$ = mk_tree( $1, false, true, $2, NULL );
+	} 
+	| LABEL_LEFT_BRACKET content '}'
+    {
+        $$ = mk_tree( $1, false, false, NULL, $2 );
+	}
+	| '{' '}'
+	{
+	    $$ = NULL;
+	}
+	| LABEL '/'
+    {
+        $$ = mk_tree( $1, false, true, NULL, NULL );
+	}
+	;
+
+//Un ensemble d'attributs
+attribute:
+    LABEL '=' STRING
+    {
+        $$ = mk_attributes( $1, $3, NULL );
+    
+    }
+    | LABEL '=' STRING attribute
+    {
+        $$ = mk_attributes( $1, $3, $4 );
+    }
+	;
+
+//Contenu d'une balise : Ensemble de textes, de balises ou de balises autofermantes.
+content:
+    string content
+    {
+        $$ = mk_forest( false, $1, $2 );
+    }
+    | tag content
+    {
+        $$ = mk_forest( false, $1, $2 );
+    }
+    | string
+    {
+        $$ = mk_forest(false, $1, NULL);
+    }
+    | tag
+    {
+        $$ = mk_forest(false, $1, NULL);
+    }
+    | exprtag
+    {
+        $$ = mk_forest(false, $1, NULL);
+    }
+    | exprtag ',' content
+    {
+        $$ = mk_forest( false, $1, $3);
+    }
+    | '{' content '}'
+    {
+        //$$ = mk_forest( false, $2, NULL );
+        $$ = $2;
+    }
+	;
 
 
 match:
@@ -604,75 +678,6 @@ wildcard:
     }
     ;
 
-//Balise
-tag:
-	LABEL_LEFT_SQUARE_BRACKET attribute ']' '{' content '}'
-	{
-        $$ = mk_tree( $1, false, false, $2, $5 );
-	}
-	| LABEL_LEFT_SQUARE_BRACKET attribute ']' '/'
-	{
-        $$ = mk_tree( $1, false, true, $2, NULL );
-	} 
-	| LABEL_LEFT_BRACKET content '}'
-    {
-        $$ = mk_tree( $1, false, false, NULL, $2 );
-	}
-	| '{' '}'
-	{
-	    $$ = NULL;
-	}
-	| LABEL '/'
-    {
-        $$ = mk_tree( $1, false, true, NULL, NULL );
-	}
-	;
-
-//Un ensemble d'attributs
-attribute:
-    LABEL '=' STRING
-    {
-        $$ = mk_attributes( $1, $3, NULL );
-    
-    }
-    | LABEL '=' STRING attribute
-    {
-        $$ = mk_attributes( $1, $3, $4 );
-    }
-	;
-
-//Contenu d'une balise : Ensemble de textes, de balises ou de balises autofermantes.
-content:
-    string content
-    {
-        $$ = mk_forest( false, $1, $2 );
-    }
-    | tag content
-    {
-        $$ = mk_forest( false, $1, $2 );
-    }
-    | string
-    {
-        $$ = mk_forest(false, $1, NULL);
-    }
-    | tag
-    {
-        $$ = mk_forest(false, $1, NULL);
-    }
-    | exprtag
-    {
-        $$ = mk_forest(false, $1, NULL);
-    }
-    | exprtag ',' content
-    {
-        $$ = mk_forest( false, $1, $3);
-    }
-    | '{' content '}'
-    {
-        //$$ = mk_forest( false, $2, NULL );
-        $$ = $2;
-    }
-	;
 
 // Ensemble de mot
 string: // tester avec un espace juste après les "
@@ -682,7 +687,9 @@ string: // tester avec un espace juste après les "
     }
 	| STRING_SPACES string
     {
-        $2->node->forest->head = add_space( $2->node->forest->head );
+        //$2->node->forest->head = add_space( $2->node->forest->head );
+        //Gestion des espaces entre les mots fonctionnent mal.
+        $2->node->forest->head = $2->node->forest->head;
         //$<node>0->node->forest->head = add_space( $<node>0->node->forest->head );
         //printf("add space to |%s|\n", $2->node->forest->head->node->str);
         $$ = $2;
@@ -696,7 +703,8 @@ string: // tester avec un espace juste après les "
         //printf("add space to ||\n");
         char * void_string = malloc(1);
         void_string[0] = '\0';
-        $$ = mk_forest( false, add_space( mk_word( void_string ) ), NULL );
+        //$$ = mk_forest( false, add_space( mk_word( void_string ) ), NULL );
+        $$ = mk_forest( false, mk_word( void_string ), NULL );
     }
 	;
 

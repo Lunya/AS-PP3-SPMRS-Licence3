@@ -1,5 +1,10 @@
-div{"contenu ..." let a = (if 1 then a{"test1"} else a{"test2"}) in
-                      if 1 then a{"test3"} else a{"test4"},
+let a1 = h1{"Il pleut"};
+let a2 = h2{"Il fait beau"};
+let b1 = p{"donc il mouille"};
+let b2 = p{"donc il fait chaud"};
+
+emit "tests/test9.html" div{"Conclusion : " let a = (if 0 then a1 else a2) in
+                      if 0 then div{"donc il mouille"} a else div{"donc il fait chaud"} a,
                   foo,
     "suite ..."
-   } where foo = div{"test"}
+   } where foo = div{"test"};

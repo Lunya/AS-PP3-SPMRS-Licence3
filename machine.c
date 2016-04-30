@@ -596,7 +596,7 @@ void on_binop(struct machine * m){
                                 m->stack->next->top->item->closure->value->node->num;
                             break;
                         case EMIT:
-                            fprintf(stderr,"Erreur de typage, emit ne peut être appliqué Ã  des entiers.");
+                            fprintf(stderr,"Erreur de typage, emit ne peut être appliqué à des entiers.");
                             exit(1);
                             break;
                         }

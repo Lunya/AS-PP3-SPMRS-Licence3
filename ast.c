@@ -561,16 +561,7 @@ void show_ast_rec(FILE * fd, const struct ast * tree, unsigned int parent, unsig
     				break;
     			}
     			default:
-    			     fprintf(fd, "\t\"node%d\" [label=\"ERROR type%d\"];\n",
-    					actual_node,
-    					tree->type
-    				);
-    				
-    				fprintf(fd, "\t\"node%d\" -> \"node%d\" [color=\"#000000\"];\n",
-    					parent,
-    					actual_node
-    				);
-    				printf("unknown tree type %d node%d\n", tree->type, *id );
+    				printf("unknown tree type %d\n", tree->type);
     		}
     	}
     }
@@ -628,6 +619,8 @@ void generate_html_rec(FILE * fd, struct ast * tree, unsigned int level, bool * 
 			    if ( !*prev_node_is_text )
 			        fprintf( fd, "%s", indent );
 				fprintf( fd, "%s", tree->node->str );
+				//Gestion temporaire des espaces
+				fprintf( fd, " ", tree->node->str );
 				*prev_node_is_text = true;
 				break;
 			}
