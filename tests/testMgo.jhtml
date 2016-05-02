@@ -1,0 +1,44 @@
+emit "tests/testMgo.html" {
+    div{
+        p{
+            a{"a"}
+            a[href="www.labri.fr"]{"ici"}
+            "Ici, vous pourrez trouver toutes sortes d'animaux:"
+            
+            ul{
+                li{"Chien"}
+                li{"Chat"}
+            }
+            a[href="www.labri.fr"]{"ici"}
+        }
+        
+    	
+    	span{"Plus d'information " a[href="www.labri.fr"]{"ici"} " !"}
+    	br/
+    	
+    	table{
+    	    tr[id="animals" class="header"]{
+    	        td{
+    	            "Dog"
+    	        }
+    	        td{
+    	            "Cat"
+    	        }
+    	    }
+    	    tr{
+    	        td{
+    	            "47%"
+    	        }
+    	        td{
+    	            "51%"
+    	        }
+    	    }
+    	}
+    }
+    
+    div{
+        center{
+            img[alt="Rat albinos" src="img/rat.png" witdth="500"]/
+        }
+    }
+};
